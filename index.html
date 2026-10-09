@@ -1,0 +1,2708 @@
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { 
+  ShoppingBag, Search, Heart, Trash2, Leaf, ShieldCheck, ChevronRight, Menu, X, Plus, Minus, 
+  Star, CheckCircle, Truck, RefreshCw, Filter, ArrowLeft, ArrowRight, User, Eye, Sun, Award, 
+  Globe, HelpCircle, Mail, Phone, MapPin, Share2, Copy, Printer, Percent, Sparkles, Check, 
+  ChevronDown, ArrowUpRight, Scale, ExternalLink, Info, AlertCircle, ShoppingCart, SlidersHorizontal
+} from 'lucide-react';
+
+const STORE_CONFIG = {
+  brandName: "EVERGREEN",
+  tagline: "Small Choices. Greener Futures.",
+  currencySymbol: "₹",
+  freeShippingThreshold: 999,
+  defaultShippingFee: 99,
+  expressShippingFee: 199,
+  taxRate: 0.05, // 5% tax
+  contactEmail: "care@evergreen-store.in",
+  contactPhone: "+91 98765 43210",
+  address: "108 Eco Valley Way, Green Zone, Bengaluru, KA 560001, India"
+};
+
+const DEMO_COUPONS = [
+  { code: "ECO10", discountPercent: 10, minSpend: 499, description: "10% off on orders above ₹499" },
+  { code: "GREEN20", discountAmount: 300, minSpend: 1499, description: "₹300 flat discount on orders above ₹1499" },
+  { code: "FREESHIP", freeShipping: true, minSpend: 0, description: "Free express delivery on any order" }
+];
+
+const INITIAL_PRODUCTS = [
+  {
+    id: "p1",
+    name: "Bamboo Fiber Food Storage Containers (Set of 4)",
+    slug: "bamboo-fiber-food-containers",
+    category: "Reusable Kitchen Essentials",
+    price: 1299,
+    originalPrice: 1699,
+    rating: 4.8,
+    reviewCount: 142,
+    images: [
+      "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1610557892470-55d9e80c0bce?auto=format&fit=crop&w=800&q=80"
+    ],
+    isBestseller: true,
+    isFeatured: true,
+    isNew: false,
+    stock: 45,
+    sku: "EVG-KTCH-001",
+    materials: ["Organic Bamboo Fiber", "Food-grade Silicone Seal", "Cornstarch Binder"],
+    shortDesc: "Airtight, leak-proof food storage set made from natural renewable bamboo fiber.",
+    fullDesc: "Ditch single-use plastic storage boxes. These bamboo fiber containers feature airtight silicone seals that keep food fresh while remaining completely biodegradable at end of life. Microwave-safe (without lid) and dishwasher friendly.",
+    variants: [{ type: "Color", options: ["Sage Green", "Warm Sand", "Mist Grey"] }],
+    care: "Dishwasher safe top rack. Handwash silicone seal with mild dish soap.",
+    sustainabilityImpact: "Saves approx. 120 single-use plastic containers per household per year.",
+    tags: ["bamboo", "kitchen", "zero waste", "food storage"]
+  },
+  {
+    id: "p2",
+    name: "Stainless Steel Double-Wall Vacuum Water Bottle (750ml)",
+    slug: "stainless-steel-vacuum-bottle",
+    category: "Reusable Bottles and Drinkware",
+    price: 899,
+    originalPrice: 1199,
+    rating: 4.9,
+    reviewCount: 310,
+    images: [
+      "https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80"
+    ],
+    isBestseller: true,
+    isFeatured: true,
+    isNew: false,
+    stock: 60,
+    sku: "EVG-DRNK-002",
+    materials: ["18/8 Food-Grade Stainless Steel", "BPA-Free Bamboo Cap"],
+    shortDesc: "Keeps drinks cold for 24 hours or hot for 12 hours with zero condensation.",
+    fullDesc: "Ergonomically designed for everyday commute and outdoor adventures. Made from heavy-duty 18/8 stainless steel that leaves no metallic taste.",
+    variants: [{ type: "Finish", options: ["Matte Forest Green", "Brushed Steel", "Terracotta Red"] }],
+    care: "Handwash recommended with warm soapy water and bottle brush.",
+    sustainabilityImpact: "Eliminates ~180 single-use plastic water bottles annually.",
+    tags: ["water bottle", "stainless steel", "insulated", "drinkware"]
+  },
+  {
+    id: "p3",
+    name: "Organic Cotton Reusable Mesh Produce Bags (Set of 6)",
+    slug: "organic-cotton-produce-bags",
+    category: "Zero-Waste Essentials",
+    price: 499,
+    originalPrice: 699,
+    rating: 4.7,
+    reviewCount: 98,
+    images: [
+      "https://images.unsplash.com/photo-1597484661643-2f5fef640dd1?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80"
+    ],
+    isBestseller: false,
+    isFeatured: true,
+    isNew: true,
+    stock: 80,
+    sku: "EVG-ZERO-003",
+    materials: ["100% GOTS Certified Organic Cotton"],
+    shortDesc: "Breathable cotton drawstring bags for plastic-free grocery shopping.",
+    fullDesc: "Tare weight tags printed directly on the bag for smooth checkout weighing. Machine washable, durable double-stitched seams designed for heavy produce.",
+    variants: [{ type: "Set Size", options: ["6 Bags (2S, 2M, 2L)", "9 Bags (3S, 3M, 3L)"] }],
+    care: "Machine wash cold with mild detergent, line dry to prevent shrinkage.",
+    sustainabilityImpact: "Replaces hundreds of lightweight plastic produce bags.",
+    tags: ["cotton", "grocery", "bags", "zero waste"]
+  },
+  {
+    id: "p4",
+    name: "Biodegradable Plant-Based Cleaning Sponge (4-Pack)",
+    slug: "biodegradable-cleaning-sponge",
+    category: "Eco-Friendly Cleaning",
+    price: 349,
+    originalPrice: 450,
+    rating: 4.6,
+    reviewCount: 76,
+    images: [
+      "https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?auto=format&fit=crop&w=800&q=80"
+    ],
+    isBestseller: false,
+    isFeatured: false,
+    isNew: true,
+    stock: 120,
+    sku: "EVG-CLN-004",
+    materials: ["Natural Wood Pulp Cellulose", "Coconut Fiber Scrubber"],
+    shortDesc: "100% compostable dish sponges made from natural plant cellulose & coconut husk.",
+    fullDesc: "Absorbent cellulose sponges paired with tough coconut fiber scouring pads that tackle tough grease without scratching your cookware or releasing microplastics into oceans.",
+    variants: [],
+    care: "Rinse after use and sanitize by boiling in water for 1 minute weekly.",
+    sustainabilityImpact: "100% home compostable within 6-8 weeks.",
+    tags: ["cleaning", "cellulose", "coconut", "compostable"]
+  },
+  {
+    id: "p5",
+    name: "Solid Organic Shampoo & Conditioner Bar Duo",
+    slug: "solid-organic-shampoo-conditioner-bar",
+    category: "Personal Care",
+    price: 649,
+    originalPrice: 899,
+    rating: 4.9,
+    reviewCount: 215,
+    images: [
+      "https://images.unsplash.com/photo-1607006344380-b6775a0824a7?auto=format&fit=crop&w=800&q=80"
+    ],
+    isBestseller: true,
+    isFeatured: true,
+    isNew: false,
+    stock: 35,
+    sku: "EVG-CARE-005",
+    materials: ["Argan Oil", "Shea Butter", "Rosemary Essential Oil", "Sodium Cocoyl Isethionate"],
+    shortDesc: "Zero-water formula bar lasting up to 80 washes per bar (equivalent to 3 bottles).",
+    fullDesc: "pH balanced and enriched with plant botanicals. Free from sulfates, parabens, synthetic fragrances, and packaged in recycled paper box.",
+    variants: [{ type: "Scent", options: ["Rosemary Mint", "Lavender Citrus", "Unscented Sensitive"] }],
+    care: "Keep in a well-draining soap dish between uses to extend product life.",
+    sustainabilityImpact: "Saves 3-4 plastic shampoo/conditioner bottles.",
+    tags: ["shampoo bar", "personal care", "plastic free", "vegan"]
+  },
+  {
+    id: "p6",
+    name: "Handcrafted Recycled Cotton Canvas Tote Bag",
+    slug: "recycled-cotton-canvas-tote-bag",
+    category: "Sustainable Fashion and Accessories",
+    price: 599,
+    originalPrice: 799,
+    rating: 4.8,
+    reviewCount: 164,
+    images: [
+      "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80"
+    ],
+    isBestseller: false,
+    isFeatured: false,
+    isNew: false,
+    stock: 50,
+    sku: "EVG-FSHN-006",
+    materials: ["70% Recycled Cotton", "30% Organic Virgin Cotton"],
+    shortDesc: "Heavyweight 12oz canvas tote with inner zip pocket and reinforced handles.",
+    fullDesc: "Roomy everyday tote bag designed for work, travel, or market visits. Features double-stitched stress points and eco-friendly water-based ink print.",
+    variants: [{ type: "Color", options: ["Natural Raw Cotton", "Olive Green", "Charcoal Black"] }],
+    care: "Spot clean recommended. Handwash cold, hang to dry.",
+    sustainabilityImpact: "Utilizes pre-consumer textile waste that would otherwise go to landfills.",
+    tags: ["tote bag", "canvas", "fashion", "recycled"]
+  },
+  {
+    id: "p7",
+    name: "Solar Powered Outdoor Garden LED Lantern",
+    slug: "solar-outdoor-garden-led-lantern",
+    category: "Energy-Saving Products",
+    price: 1499,
+    originalPrice: 1999,
+    rating: 4.7,
+    reviewCount: 88,
+    images: [
+      "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80"
+    ],
+    isBestseller: false,
+    isFeatured: true,
+    isNew: true,
+    stock: 25,
+    sku: "EVG-EGRY-007",
+    materials: ["Weatherproof Recycled Aluminium", "Monocrystalline Solar Panel"],
+    shortDesc: "Auto dusk-to-dawn warm lighting lantern powered 100% by sunlight.",
+    fullDesc: "Charges during the day and provides 10-12 hours of ambient warm glow at night. IP65 waterproof rated for all seasons.",
+    variants: [],
+    care: "Wipe solar panel periodically with damp cloth to maximize solar charging efficiency.",
+    sustainabilityImpact: "Zero electricity usage, saves energy costs continuously.",
+    tags: ["solar", "lighting", "garden", "outdoor", "energy saving"]
+  },
+  {
+    id: "p8",
+    name: "Upcycled Coconut Shell Soy Candle Set",
+    slug: "upcycled-coconut-shell-soy-candle",
+    category: "Sustainable Gifts",
+    price: 799,
+    originalPrice: 999,
+    rating: 4.9,
+    reviewCount: 132,
+    images: [
+      "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=800&q=80"
+    ],
+    isBestseller: true,
+    isFeatured: false,
+    isNew: false,
+    stock: 40,
+    sku: "EVG-GIFT-008",
+    materials: ["Reclaimed Coconut Shell", "100% Soy Wax", "Crackling Wood Wick"],
+    shortDesc: "Hand-poured aromatic soy candles in natural reclaimed coconut bowls.",
+    fullDesc: "Infused with pure essential oils. Burns cleanly for up to 45 hours without soot. After burn out, clean the coconut bowl to use as a planter or trinket holder.",
+    variants: [{ type: "Aroma", options: ["Vanilla & Sandalwood", "Wild Bergamot", "Eucalyptus & Mint"] }],
+    care: "Trim wood wick to 1/4 inch before each lighting session.",
+    sustainabilityImpact: "Upcycles coconut shells discarded by food industries.",
+    tags: ["candle", "gift", "soy wax", "coconut"]
+  },
+  {
+    id: "p9",
+    name: "Natural Beeswax Food Wraps (Set of 3 Assorted Sizes)",
+    slug: "beeswax-food-wraps-set",
+    category: "Reusable Kitchen Essentials",
+    price: 549,
+    originalPrice: 750,
+    rating: 4.8,
+    reviewCount: 190,
+    images: [
+      "https://images.unsplash.com/photo-1610557892470-55d9e80c0bce?auto=format&fit=crop&w=800&q=80"
+    ],
+    isBestseller: true,
+    isFeatured: false,
+    isNew: false,
+    stock: 75,
+    sku: "EVG-KTCH-009",
+    materials: ["Organic Cotton", "Sustainably Sourced Beeswax", "Jojoba Oil", "Tree Resin"],
+    shortDesc: "Self-adhesive, washable alternative to plastic cling wrap.",
+    fullDesc: "Seal bowls, cover leftover produce, or wrap sandwiches using warmth of your hands. Washable and reusable for over 1 year.",
+    variants: [{ type: "Pattern", options: ["Botanical Leaves", "Honeycomb Amber", "Ocean Waves"] }],
+    care: "Wash in cool water with mild soap. Air dry. Do not expose to hot water or microwave.",
+    sustainabilityImpact: "Replaces ~100 meters of single-use plastic wrap.",
+    tags: ["beeswax", "kitchen", "reusable", "food wrap"]
+  },
+  {
+    id: "p10",
+    name: "Smart Indoor Herb Garden Kit with Self-Watering Pots",
+    slug: "indoor-herb-garden-kit",
+    category: "Gardening and Outdoors",
+    price: 1899,
+    originalPrice: 2499,
+    rating: 4.8,
+    reviewCount: 54,
+    images: [
+      "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=800&q=80"
+    ],
+    isBestseller: false,
+    isFeatured: true,
+    isNew: true,
+    stock: 20,
+    sku: "EVG-GARD-010",
+    materials: ["Recycled Terracotta Pots", "Sub-irrigation Cotton Wicks", "Non-GMO Seeds"],
+    shortDesc: "Grow fresh Basil, Mint & Cilantro on your windowsill effortlessly.",
+    fullDesc: "Includes 3 self-watering terracotta pots, organic coco-peat soil discs, non-GMO herb seeds, and bamboo plant markers.",
+    variants: [],
+    care: "Fill bottom reservoir with water once per week. Place near bright sunlight.",
+    sustainabilityImpact: "Reduces packaging waste from grocery store fresh herbs.",
+    tags: ["gardening", "indoor herbs", "self watering", "planter"]
+  },
+  {
+    id: "p11",
+    name: "Natural Bamboo Toothbrush Set (Pack of 4)",
+    slug: "bamboo-toothbrush-pack-4",
+    category: "Personal Care",
+    price: 299,
+    originalPrice: 399,
+    rating: 4.7,
+    reviewCount: 420,
+    images: [
+      "https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?auto=format&fit=crop&w=800&q=80"
+    ],
+    isBestseller: true,
+    isFeatured: false,
+    isNew: false,
+    stock: 150,
+    sku: "EVG-CARE-011",
+    materials: ["Moso Bamboo Handle", "BPA-Free Soft Nylon-6 Bristles"],
+    shortDesc: "Ergonomic water-resistant bamboo handle with wave-pattern soft bristles.",
+    fullDesc: "Numbers engraved on each toothbrush for easy family identification. Snap off head to compost the handle.",
+    variants: [{ type: "Bristle", options: ["Soft Charcoal", "Medium Clear"] }],
+    care: "Store in a dry toothbrush holder. Replace every 3 months.",
+    sustainabilityImpact: "Keeps plastic toothbrushes out of oceans and landfills.",
+    tags: ["bamboo", "toothbrush", "personal care", "oral care"]
+  },
+  {
+    id: "p12",
+    name: "Organic Jute & Cotton Handwoven Floor Rug (3x5 ft)",
+    slug: "jute-cotton-handwoven-floor-rug",
+    category: "Home and Living",
+    price: 2499,
+    originalPrice: 3299,
+    rating: 4.9,
+    reviewCount: 42,
+    images: [
+      "https://images.unsplash.com/photo-1600121848594-d8644e57abab?auto=format&fit=crop&w=800&q=80"
+    ],
+    isBestseller: false,
+    isFeatured: true,
+    isNew: false,
+    stock: 15,
+    sku: "EVG-HOME-012",
+    materials: ["100% Natural Golden Jute", "Recycled Cotton Threads"],
+    shortDesc: "Rustic earthy handwoven area rug crafted by local artisan cooperatives.",
+    fullDesc: "Brings natural texture and warm boho aesthetics to bedrooms or living spaces. Reversible dual-sided weaving for extended wear.",
+    variants: [],
+    care: "Vacuum regularly without beater bar. Spot clean stains immediately with mild soapy water.",
+    sustainabilityImpact: "Biodegradable natural fibers supporting artisan livelihoods.",
+    tags: ["jute", "rug", "home decor", "handwoven"]
+  },
+  {
+    id: "p13",
+    name: "Concentrated Eco Laundry Detergent Sheets (60 Washes)",
+    slug: "eco-laundry-detergent-sheets",
+    category: "Eco-Friendly Cleaning",
+    price: 499,
+    originalPrice: 699,
+    rating: 4.8,
+    reviewCount: 115,
+    images: [
+      "https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?auto=format&fit=crop&w=800&q=80"
+    ],
+    isBestseller: false,
+    isFeatured: false,
+    isNew: true,
+    stock: 90,
+    sku: "EVG-CLN-013",
+    materials: ["Plant-based Surfactants", "Coconut Oil Extract", "Glycerol"],
+    shortDesc: "Pre-measured dissolvable detergent strips with zero plastic heavy jugs.",
+    fullDesc: "Dissolves instantly in hot or cold water. Hypoallergenic, septic-safe formula suitable for sensitive skin and baby clothes.",
+    variants: [{ type: "Fragrance", options: ["Fresh Linen", "Lavender Breeze", "Fragrance Free"] }],
+    care: "Keep box in dry place away from direct humidity.",
+    sustainabilityImpact: "Reduces heavy carbon transport emissions and eliminates plastic jugs.",
+    tags: ["laundry", "detergent", "zero waste", "cleaning"]
+  },
+  {
+    id: "p14",
+    name: "Insulated Stainless Steel Coffee Travel Tumbler (450ml)",
+    slug: "insulated-coffee-travel-tumbler",
+    category: "Reusable Bottles and Drinkware",
+    price: 749,
+    originalPrice: 999,
+    rating: 4.7,
+    reviewCount: 188,
+    images: [
+      "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80"
+    ],
+    isBestseller: true,
+    isFeatured: false,
+    isNew: false,
+    stock: 55,
+    sku: "EVG-DRNK-014",
+    materials: ["Double-Wall Stainless Steel", "Leakproof Tritan Flip Lid"],
+    shortDesc: "Fits standard car cup holders. Keeps coffee piping hot for up to 6 hours.",
+    fullDesc: "Non-slip silicone base and easy-sip lock lid prevent spills on the go. High durability powder-coated finish.",
+    variants: [{ type: "Color", options: ["Sage Green", "Warm Oat", "Matte Black"] }],
+    care: "Handwash body. Top rack dishwasher safe lid.",
+    sustainabilityImpact: "Prevents disposable paper and plastic coffee cup waste.",
+    tags: ["coffee mug", "travel tumbler", "drinkware", "stainless steel"]
+  },
+  {
+    id: "p15",
+    name: "Natural Cork Desk Mat and Mousepad Set",
+    slug: "cork-desk-mat-mousepad-set",
+    category: "Home and Living",
+    price: 1199,
+    originalPrice: 1599,
+    rating: 4.9,
+    reviewCount: 67,
+    images: [
+      "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&w=800&q=80"
+    ],
+    isBestseller: false,
+    isFeatured: true,
+    isNew: false,
+    stock: 30,
+    sku: "EVG-HOME-015",
+    materials: ["Organic Harvesting Oak Cork", "Natural Rubber Underlay"],
+    shortDesc: "Sleek, eco-friendly workspace mat with water-repellent protective layer.",
+    fullDesc: "Provides smooth tracking for optical mice while shielding your desk surface from scratches, heat spills, and ink stains.",
+    variants: [],
+    care: "Wipe clean with moist damp cloth and mild cleanser.",
+    sustainabilityImpact: "Cork harvesting preserves trees as only bark is harvested sustainably.",
+    tags: ["cork", "desk mat", "office", "home"]
+  },
+  {
+    id: "p16",
+    name: "Compostable Heavy-Duty Trash Bags (Pack of 30)",
+    slug: "compostable-trash-bags-30pack",
+    category: "Zero-Waste Essentials",
+    price: 399,
+    originalPrice: 499,
+    rating: 4.6,
+    reviewCount: 89,
+    images: [
+      "https://images.unsplash.com/photo-1597484661643-2f5fef640dd1?auto=format&fit=crop&w=800&q=80"
+    ],
+    isBestseller: false,
+    isFeatured: false,
+    isNew: false,
+    stock: 110,
+    sku: "EVG-ZERO-016",
+    materials: ["PBAT + Cornstarch Biopolymer"],
+    shortDesc: "Tough leak-resistant 20 Liter waste bags certified home compostable.",
+    fullDesc: "Breaks down into water, CO2 and biomass without toxic chemical residue. Reinforced star bottom seal prevents tears.",
+    variants: [{ type: "Capacity", options: ["20 Liters (30 Bags)", "40 Liters (20 Bags)"] }],
+    care: "Store in cool dry place. Use within 12 months of purchase.",
+    sustainabilityImpact: "Composts within 90-180 days in soil matrix.",
+    tags: ["compostable", "trash bag", "zero waste"]
+  },
+  {
+    id: "p17",
+    name: "Zero-Waste Organic Cotton Unisex T-Shirt",
+    slug: "organic-cotton-unisex-tshirt",
+    category: "Sustainable Fashion and Accessories",
+    price: 899,
+    originalPrice: 1299,
+    rating: 4.8,
+    reviewCount: 104,
+    images: [
+      "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80"
+    ],
+    isBestseller: false,
+    isFeatured: false,
+    isNew: true,
+    stock: 45,
+    sku: "EVG-FSHN-017",
+    materials: ["100% GOTS Organic Fair-trade Cotton"],
+    shortDesc: "Ultra-soft, breathable everyday t-shirt dyed with non-toxic botanical colors.",
+    fullDesc: "Pre-shrunk fabric with classic relaxed fit. Produced in zero-liquid-discharge certified ethical manufacturing facilities.",
+    variants: [
+      { type: "Size", options: ["S", "M", "L", "XL"] },
+      { type: "Color", options: ["Sage Green", "Raw Ecru", "Earthy Clay"] }
+    ],
+    care: "Machine wash cold with like colors. Tumble dry low or line dry.",
+    sustainabilityImpact: "Saves 2,000+ liters of water compared to conventional cotton.",
+    tags: ["tshirt", "organic cotton", "fashion", "apparel"]
+  },
+  {
+    id: "p18",
+    name: "Handmade Neem Wood Anti-Static Hair Comb",
+    slug: "neem-wood-anti-static-hair-comb",
+    category: "Personal Care",
+    price: 249,
+    originalPrice: 349,
+    rating: 4.9,
+    reviewCount: 312,
+    images: [
+      "https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?auto=format&fit=crop&w=800&q=80"
+    ],
+    isBestseller: true,
+    isFeatured: false,
+    isNew: false,
+    stock: 95,
+    sku: "EVG-CARE-018",
+    materials: ["100% Medicinal Neem Wood"],
+    shortDesc: "Wide-tooth comb infused with natural medicinal antibacterial properties of Neem.",
+    fullDesc: "Prevents static hair flyaways, gently massages the scalp to boost blood flow, and controls dandruff natural oil distribution.",
+    variants: [],
+    care: "Do not soak in water for long periods. Wipe clean and rub natural oil once a month.",
+    sustainabilityImpact: "Plastic-free alternative to synthetic hair combs.",
+    tags: ["neem wood", "comb", "hair care", "personal care"]
+  },
+  {
+    id: "p19",
+    name: "Smart Water Saver Aerator Tap Nozzle (Set of 2)",
+    slug: "smart-water-saver-aerator-nozzle",
+    category: "Energy-Saving Products",
+    price: 499,
+    originalPrice: 799,
+    rating: 4.7,
+    reviewCount: 78,
+    images: [
+      "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=800&q=80"
+    ],
+    isBestseller: false,
+    isFeatured: false,
+    isNew: false,
+    stock: 65,
+    sku: "EVG-EGRY-019",
+    materials: ["Lead-Free Brass Housing", "Stainless Steel Mesh Filter"],
+    shortDesc: "Cuts water consumption by up to 70% without sacrificing water pressure.",
+    fullDesc: "Mixes air into the water stream creating a soft splash-free pressure spray. Easy screw-on universal installation for standard household taps.",
+    variants: [{ type: "Flow Mode", options: ["Dual Mist & Stream", "Standard Aerator"] }],
+    care: "Unscrew and rinse lime scale sediment mesh every 6 months.",
+    sustainabilityImpact: "Saves up to 1,200 Liters of household tap water per month.",
+    tags: ["water saver", "aerator", "energy saving", "plumbing"]
+  },
+  {
+    id: "p20",
+    name: "Recycled Glass Flower Vase with Jute Rope Detail",
+    slug: "recycled-glass-flower-vase",
+    category: "Sustainable Gifts",
+    price: 899,
+    originalPrice: 1199,
+    rating: 4.8,
+    reviewCount: 52,
+    images: [
+      "https://images.unsplash.com/photo-1581783342308-f792dbdd27c5?auto=format&fit=crop&w=800&q=80"
+    ],
+    isBestseller: false,
+    isFeatured: false,
+    isNew: true,
+    stock: 28,
+    sku: "EVG-GIFT-020",
+    materials: ["100% Recycled Bottle Glass", "Natural Jute Twine"],
+    shortDesc: "Hand-blown recycled glass vase featuring subtle sea-foam tinted clarity.",
+    fullDesc: "Add elegance to your living room table with fresh wildflowers or dried botanicals. Uniquely crafted with slight organic variations.",
+    variants: [],
+    care: "Handwash gently with warm water and soft sponge.",
+    sustainabilityImpact: "Diverts post-consumer glass bottles from landfill incinerators.",
+    tags: ["glass vase", "decor", "gift", "recycled"]
+  },
+  {
+    id: "p21",
+    name: "Natural Loofah Body Scrubber Pads (Pack of 3)",
+    slug: "natural-loofah-body-scrubber",
+    category: "Personal Care",
+    price: 299,
+    originalPrice: 399,
+    rating: 4.6,
+    reviewCount: 124,
+    images: [
+      "https://images.unsplash.com/photo-1607006344380-b6775a0824a7?auto=format&fit=crop&w=800&q=80"
+    ],
+    isBestseller: false,
+    isFeatured: false,
+    isNew: false,
+    stock: 85,
+    sku: "EVG-CARE-021",
+    materials: ["100% Dried Luffa Gourd Plant", "Cotton Hanging Loop"],
+    shortDesc: "Exfoliating natural plant fiber loofahs for smooth rejuvenated skin.",
+    fullDesc: "Expands into a soft textured scrubber when soaked in warm water. Completely free from plastic mesh poufs.",
+    variants: [],
+    care: "Hang to dry completely in ventilated area between uses.",
+    sustainabilityImpact: "100% plant-derived & biodegradable.",
+    tags: ["loofah", "personal care", "exfoliator", "skincare"]
+  },
+  {
+    id: "p22",
+    name: "Reusable Stainless Steel Straw Kit with Cleaning Brush",
+    slug: "stainless-steel-straw-kit",
+    category: "Reusable Bottles and Drinkware",
+    price: 299,
+    originalPrice: 450,
+    rating: 4.9,
+    reviewCount: 280,
+    images: [
+      "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80"
+    ],
+    isBestseller: false,
+    isFeatured: false,
+    isNew: false,
+    stock: 130,
+    sku: "EVG-DRNK-022",
+    materials: ["Food Grade 304 Stainless Steel", "Cotton Travel Pouch"],
+    shortDesc: "Set of 2 straight + 2 bent straws with soft silicone tips & nylon brush.",
+    fullDesc: "Rust-resistant, dishwasher safe metal drinking straws ideal for smoothies, iced coffee, and fresh juices on the go.",
+    variants: [{ type: "Finish", options: ["Rainbow Anodized", "Silver Classic", "Rose Gold"] }],
+    care: "Use included scrub brush to clean inside thoroughly under running tap.",
+    sustainabilityImpact: "Replaces single-use plastic straws that harm marine habitats.",
+    tags: ["straws", "stainless steel", "drinkware"]
+  },
+  {
+    id: "p23",
+    name: "Organic Compressed Coco Peat Soil Blocks (5 kg Block)",
+    slug: "compressed-coco-peat-soil-block",
+    category: "Gardening and Outdoors",
+    price: 399,
+    originalPrice: 599,
+    rating: 4.8,
+    reviewCount: 93,
+    images: [
+      "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=800&q=80"
+    ],
+    isBestseller: false,
+    isFeatured: false,
+    isNew: false,
+    stock: 70,
+    sku: "EVG-GARD-023",
+    materials: ["100% Coconut Husk Coir Dust"],
+    shortDesc: "Expands up to 75 Liters of fertile aerated potting soil substrate.",
+    fullDesc: "Retains moisture exceptionally well while promoting healthy root aeration for indoor plants, balcony garden pots, and seed germination.",
+    variants: [],
+    care: "Add 22-25 Liters of water to block and wait 15 minutes for expansion.",
+    sustainabilityImpact: "Sustainable alternative to peat moss mining which destroys peatlands.",
+    tags: ["coco peat", "gardening", "soil", "plants"]
+  },
+  {
+    id: "p24",
+    name: "Zero-Waste Starter Kitchen & Dining Gift Bundle",
+    slug: "zero-waste-starter-kitchen-bundle",
+    category: "Sustainable Gifts",
+    price: 2199,
+    originalPrice: 2999,
+    rating: 5.0,
+    reviewCount: 68,
+    images: [
+      "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=800&q=80"
+    ],
+    isBestseller: true,
+    isFeatured: true,
+    isNew: true,
+    stock: 22,
+    sku: "EVG-GIFT-024",
+    materials: ["Bamboo", "Organic Cotton", "Coconut Shell", "Stainless Steel"],
+    shortDesc: "Curated gift set featuring bamboo containers, beeswax wraps, produce bags & bottle.",
+    fullDesc: "The ultimate eco-friendly housewarming or birthday gift! Packaged in an unbleached recycled cardboard gift box tied with natural twine and flower card.",
+    variants: [],
+    care: "Follow care instructions for individual enclosed items.",
+    sustainabilityImpact: "Provides everything needed to kickstart a zero-waste lifestyle.",
+    tags: ["gift set", "starter kit", "kitchen", "zero waste"]
+  }
+];
+
+const CATEGORIES_LIST = [
+  "All Products",
+  "Reusable Kitchen Essentials",
+  "Eco-Friendly Cleaning",
+  "Personal Care",
+  "Reusable Bottles and Drinkware",
+  "Sustainable Fashion and Accessories",
+  "Home and Living",
+  "Zero-Waste Essentials",
+  "Gardening and Outdoors",
+  "Energy-Saving Products",
+  "Sustainable Gifts"
+];
+
+export default function App() {
+  const [activePage, setActivePage] = useState("home"); // home, shop, product, cart, checkout, confirmation, sustainability, about, contact, faq, policy, wishlist
+  const [selectedProductId, setSelectedProductId] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState("All Products");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [priceRange, setPriceRange] = useState([0, 3000]);
+  const [selectedMaterialFilter, setSelectedMaterialFilter] = useState("All");
+  const [sortBy, setSortBy] = useState("featured"); // featured, price-low, price-high, rating, name
+  const [onlyInStock, setOnlyInStock] = useState(false);
+
+  // Cart state persisted in localStorage
+  const [cart, setCart] = useState(() => {
+    try {
+      const saved = localStorage.getItem("evergreen_cart");
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  // Wishlist state persisted in localStorage
+  const [wishlist, setWishlist] = useState(() => {
+    try {
+      const saved = localStorage.getItem("evergreen_wishlist");
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  // Compare List state
+  const [compareList, setCompareList] = useState([]);
+  const [showCompareModal, setShowCompareModal] = useState(false);
+
+  // Quick view product modal state
+  const [quickViewProduct, setQuickViewProduct] = useState(null);
+
+  // Applied Coupon state
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponInput, setCouponInput] = useState("");
+  const [couponError, setCouponError] = useState("");
+
+  // Last completed order summary
+  const [lastOrder, setLastOrder] = useState(null);
+
+  // Toast Notification state
+  const [toast, setToast] = useState(null);
+
+  // Navigation Mobile Drawer
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Save Cart to LocalStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem("evergreen_cart", JSON.stringify(cart));
+    } catch (e) {}
+  }, [cart]);
+
+  // Save Wishlist to LocalStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem("evergreen_wishlist", JSON.stringify(wishlist));
+    } catch (e) {}
+  }, [wishlist]);
+
+  // Toast helper
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => {
+      setToast(null);
+    }, 3500);
+  };
+
+  const addToCart = (product, quantity = 1, selectedVariant = null) => {
+    setCart(prevCart => {
+      const variantKey = selectedVariant ? JSON.stringify(selectedVariant) : "default";
+      const existingIndex = prevCart.findIndex(
+        item => item.id === product.id && JSON.stringify(item.selectedVariant) === variantKey
+      );
+
+      if (existingIndex > -1) {
+        const updated = [...prevCart];
+        const newQty = updated[existingIndex].quantity + quantity;
+        if (newQty > product.stock) {
+          showToast(`Cannot add more. Stock limit reached (${product.stock} available).`, "error");
+          return prevCart;
+        }
+        updated[existingIndex].quantity = newQty;
+        showToast(`Updated ${product.name} quantity in cart!`);
+        return updated;
+      } else {
+        if (quantity > product.stock) {
+          showToast(`Sorry, only ${product.stock} items in stock.`, "error");
+          return prevCart;
+        }
+        showToast(`Added ${product.name} to cart!`);
+        return [...prevCart, { ...product, quantity, selectedVariant }];
+      }
+    });
+  };
+
+  const updateCartQuantity = (productId, variantKey, newQty) => {
+    if (newQty <= 0) {
+      removeFromCart(productId, variantKey);
+      return;
+    }
+    setCart(prevCart =>
+      prevCart.map(item => {
+        const itemVariantKey = item.selectedVariant ? JSON.stringify(item.selectedVariant) : "default";
+        if (item.id === productId && itemVariantKey === variantKey) {
+          if (newQty > item.stock) {
+            showToast(`Maximum available stock reached (${item.stock}).`, "error");
+            return item;
+          }
+          return { ...item, quantity: newQty };
+        }
+        return item;
+      })
+    );
+  };
+
+  const removeFromCart = (productId, variantKey) => {
+    setCart(prevCart =>
+      prevCart.filter(item => {
+        const itemVariantKey = item.selectedVariant ? JSON.stringify(item.selectedVariant) : "default";
+        return !(item.id === productId && itemVariantKey === variantKey);
+      })
+    );
+    showToast("Item removed from cart.", "info");
+  };
+
+  const clearCart = () => {
+    setCart([]);
+  };
+
+  const toggleWishlist = (product) => {
+    if (wishlist.some(item => item.id === product.id)) {
+      setWishlist(prev => prev.filter(item => item.id !== product.id));
+      showToast("Removed from Wishlist", "info");
+    } else {
+      setWishlist(prev => [...prev, product]);
+      showToast("Added to Wishlist ❤️");
+    }
+  };
+
+  const toggleCompare = (product) => {
+    if (compareList.some(item => item.id === product.id)) {
+      setCompareList(prev => prev.filter(item => item.id !== product.id));
+      showToast("Removed from Comparison");
+    } else {
+      if (compareList.length >= 3) {
+        showToast("You can compare up to 3 products at a time.", "error");
+        return;
+      }
+      setCompareList(prev => [...prev, product]);
+      showToast("Added to Comparison list");
+    }
+  };
+
+  const cartSubtotal = useMemo(() => {
+    return cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  }, [cart]);
+
+  const couponDiscount = useMemo(() => {
+    if (!appliedCoupon) return 0;
+    if (cartSubtotal < (appliedCoupon.minSpend || 0)) return 0;
+    if (appliedCoupon.discountPercent) {
+      return Math.round((cartSubtotal * appliedCoupon.discountPercent) / 100);
+    }
+    if (appliedCoupon.discountAmount) {
+      return appliedCoupon.discountAmount;
+    }
+    return 0;
+  }, [cartSubtotal, appliedCoupon]);
+
+  const estimatedShipping = useMemo(() => {
+    if (cartSubtotal === 0) return 0;
+    if (appliedCoupon?.freeShipping) return 0;
+    if (cartSubtotal >= STORE_CONFIG.freeShippingThreshold) return 0;
+    return STORE_CONFIG.defaultShippingFee;
+  }, [cartSubtotal, appliedCoupon]);
+
+  const estimatedTax = useMemo(() => {
+    const taxableAmount = Math.max(0, cartSubtotal - couponDiscount);
+    return Math.round(taxableAmount * STORE_CONFIG.taxRate);
+  }, [cartSubtotal, couponDiscount]);
+
+  const grandTotal = useMemo(() => {
+    return Math.max(0, cartSubtotal - couponDiscount + estimatedShipping + estimatedTax);
+  }, [cartSubtotal, couponDiscount, estimatedShipping, estimatedTax]);
+
+  const applyCouponHandler = (e) => {
+    e.preventDefault();
+    setCouponError("");
+    const code = couponInput.trim().toUpperCase();
+    const found = DEMO_COUPONS.find(c => c.code === code);
+
+    if (!found) {
+      setCouponError("Invalid coupon code. Try 'ECO10' or 'GREEN20'.");
+      return;
+    }
+    if (cartSubtotal < found.minSpend) {
+      setCouponError(`Minimum order amount of ₹${found.minSpend} required for code ${code}.`);
+      return;
+    }
+
+    setAppliedCoupon(found);
+    showToast(`Coupon '${code}' applied successfully! 🎉`);
+  };
+
+  const filteredProducts = useMemo(() => {
+    return INITIAL_PRODUCTS.filter(product => {
+      // Category filter
+      if (selectedCategory !== "All Products" && product.category !== selectedCategory) {
+        return false;
+      }
+      // Search query filter
+      if (searchQuery.trim() !== "") {
+        const q = searchQuery.toLowerCase();
+        const matchName = product.name.toLowerCase().includes(q);
+        const matchDesc = product.shortDesc.toLowerCase().includes(q) || product.fullDesc.toLowerCase().includes(q);
+        const matchTag = product.tags.some(t => t.toLowerCase().includes(q));
+        const matchCat = product.category.toLowerCase().includes(q);
+        if (!matchName && !matchDesc && !matchTag && !matchCat) return false;
+      }
+      // Price range
+      if (product.price < priceRange[0] || product.price > priceRange[1]) {
+        return false;
+      }
+      // Material filter
+      if (selectedMaterialFilter !== "All") {
+        const hasMaterial = product.materials.some(m => m.toLowerCase().includes(selectedMaterialFilter.toLowerCase()));
+        if (!hasMaterial) return false;
+      }
+      // In stock only
+      if (onlyInStock && product.stock <= 0) {
+        return false;
+      }
+      return true;
+    }).sort((a, b) => {
+      if (sortBy === "price-low") return a.price - b.price;
+      if (sortBy === "price-high") return b.price - a.price;
+      if (sortBy === "rating") return b.rating - a.rating;
+      if (sortBy === "name") return a.name.localeCompare(b.name);
+      return 0; // Default featured
+    });
+  }, [selectedCategory, searchQuery, priceRange, selectedMaterialFilter, sortBy, onlyInStock]);
+
+  const navigateToProduct = (productId) => {
+    setSelectedProductId(productId);
+    setActivePage("product");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const navigateToCategory = (catName) => {
+    setSelectedCategory(catName);
+    setActivePage("shop");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  return (
+    <div className="min-h-screen bg-stone-50 text-stone-800 font-sans flex flex-col selection:bg-emerald-200 selection:text-emerald-900">
+      
+      {/* Toast Notification Container */}
+      {toast && (
+        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-3 bg-stone-900 text-white px-5 py-3.5 rounded-xl shadow-2xl transition-all duration-300 border border-stone-700 animate-bounce">
+          {toast.type === "error" ? (
+            <AlertCircle className="w-5 h-5 text-amber-400 shrink-0" />
+          ) : (
+            <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+          )}
+          <span className="text-sm font-medium">{toast.message}</span>
+        </div>
+      )}
+
+      {/* Quick View Modal */}
+      {quickViewProduct && (
+        <QuickViewModal 
+          product={quickViewProduct} 
+          onClose={() => setQuickViewProduct(null)} 
+          onAddToCart={addToCart}
+          onViewFullDetails={() => {
+            navigateToProduct(quickViewProduct.id);
+            setQuickViewProduct(null);
+          }}
+        />
+      )}
+
+      {/* Comparison Drawer/Modal */}
+      {showCompareModal && (
+        <CompareModal 
+          compareList={compareList} 
+          onClose={() => setShowCompareModal(false)}
+          onRemove={(id) => setCompareList(prev => prev.filter(p => p.id !== id))}
+          onAddToCart={addToCart}
+        />
+      )}
+
+      {}
+      <header className="sticky top-0 z-40 bg-stone-50/90 backdrop-blur-md border-b border-stone-200">
+        {/* Top Announcement Bar */}
+        <div className="bg-emerald-900 text-emerald-100 text-xs py-2 px-4 text-center font-medium tracking-wide flex justify-center items-center gap-2">
+          <Sparkles className="w-3.5 h-3.5 text-emerald-300" />
+          <span>Make the switch to sustainable living. Use code <strong className="underline text-white">ECO10</strong> for 10% off!</span>
+          <span className="hidden md:inline-block text-emerald-400">| Free Shipping above ₹999</span>
+        </div>
+
+        {/* Main Header Container */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+          
+          {/* Logo */}
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => { setActivePage("home"); window.scrollTo({top:0}); }}>
+            <div className="w-10 h-10 rounded-xl bg-emerald-800 text-emerald-100 flex items-center justify-center shadow-md">
+              <Leaf className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-2xl font-bold tracking-tight text-emerald-950 block leading-none">EVERGREEN</span>
+              <span className="text-[10px] tracking-widest uppercase text-emerald-700 font-semibold">{STORE_CONFIG.tagline}</span>
+            </div>
+          </div>
+
+          {/* Desktop Navigation Links */}
+          <nav className="hidden lg:flex items-center gap-8 text-sm font-medium text-stone-700">
+            <button 
+              onClick={() => setActivePage("home")} 
+              className={`hover:text-emerald-800 transition-colors ${activePage === "home" ? "text-emerald-800 font-bold border-b-2 border-emerald-700 pb-1" : ""}`}
+            >
+              Home
+            </button>
+            <button 
+              onClick={() => { setSelectedCategory("All Products"); setActivePage("shop"); }} 
+              className={`hover:text-emerald-800 transition-colors ${activePage === "shop" ? "text-emerald-800 font-bold border-b-2 border-emerald-700 pb-1" : ""}`}
+            >
+              Shop Catalog
+            </button>
+            <button 
+              onClick={() => setActivePage("sustainability")} 
+              className={`hover:text-emerald-800 transition-colors ${activePage === "sustainability" ? "text-emerald-800 font-bold border-b-2 border-emerald-700 pb-1" : ""}`}
+            >
+              Sustainability
+            </button>
+            <button 
+              onClick={() => setActivePage("about")} 
+              className={`hover:text-emerald-800 transition-colors ${activePage === "about" ? "text-emerald-800 font-bold border-b-2 border-emerald-700 pb-1" : ""}`}
+            >
+              Our Mission
+            </button>
+            <button 
+              onClick={() => setActivePage("faq")} 
+              className={`hover:text-emerald-800 transition-colors ${activePage === "faq" ? "text-emerald-800 font-bold border-b-2 border-emerald-700 pb-1" : ""}`}
+            >
+              FAQs
+            </button>
+          </nav>
+
+          {/* Search, Wishlist & Cart Actions */}
+          <div className="flex items-center gap-4">
+            
+            {/* Quick Search bar component */}
+            <div className="hidden sm:flex items-center bg-stone-100 border border-stone-300 rounded-full px-3 py-1.5 focus-within:ring-2 focus-within:ring-emerald-700 transition-all">
+              <Search className="w-4 h-4 text-stone-500 mr-2" />
+              <input 
+                type="text" 
+                placeholder="Search eco products..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    setActivePage("shop");
+                  }
+                }}
+                className="bg-transparent text-sm text-stone-800 placeholder-stone-400 focus:outline-none w-36 lg:w-48"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery("")} className="text-stone-400 hover:text-stone-600 text-xs">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Compare items badge button */}
+            {compareList.length > 0 && (
+              <button 
+                onClick={() => setShowCompareModal(true)}
+                className="relative p-2 text-stone-700 hover:text-emerald-800 transition-colors hidden sm:block"
+                title="Compare Products"
+              >
+                <Scale className="w-5 h-5" />
+                <span className="absolute -top-1 -right-1 bg-emerald-800 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                  {compareList.length}
+                </span>
+              </button>
+            )}
+
+            {/* Wishlist Button */}
+            <button 
+              onClick={() => setActivePage("wishlist")}
+              className="relative p-2 text-stone-700 hover:text-emerald-800 transition-colors"
+              title="Wishlist"
+            >
+              <Heart className={`w-5 h-5 ${wishlist.length > 0 ? "fill-emerald-800 text-emerald-800" : ""}`} />
+              {wishlist.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-emerald-800 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                  {wishlist.length}
+                </span>
+              )}
+            </button>
+
+            {/* Cart Icon Button */}
+            <button 
+              onClick={() => setActivePage("cart")}
+              className="relative bg-emerald-800 text-white px-3.5 py-2 rounded-xl flex items-center gap-2 hover:bg-emerald-900 transition-all shadow-sm"
+              title="Shopping Cart"
+            >
+              <ShoppingBag className="w-5 h-5" />
+              <span className="font-semibold text-sm">{cart.reduce((sum, i) => sum + i.quantity, 0)}</span>
+              <span className="hidden md:inline-block text-xs border-l border-emerald-700 pl-2 text-emerald-200">
+                ₹{cartSubtotal}
+              </span>
+            </button>
+
+            {/* Mobile Menu Toggle Button */}
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 text-stone-700 hover:text-emerald-800"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+
+          </div>
+        </div>
+
+        {/* Mobile Navigation Drawer */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden bg-stone-50 border-b border-stone-200 px-4 pt-2 pb-6 space-y-3">
+            <div className="flex items-center bg-stone-100 border border-stone-300 rounded-lg px-3 py-2 mb-3">
+              <Search className="w-4 h-4 text-stone-500 mr-2" />
+              <input 
+                type="text" 
+                placeholder="Search products..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    setActivePage("shop");
+                    setMobileMenuOpen(false);
+                  }
+                }}
+                className="bg-transparent text-sm w-full focus:outline-none"
+              />
+            </div>
+            <button 
+              onClick={() => { setActivePage("home"); setMobileMenuOpen(false); }} 
+              className="block w-full text-left font-medium py-2 text-stone-800 hover:text-emerald-800"
+            >
+              Home
+            </button>
+            <button 
+              onClick={() => { setSelectedCategory("All Products"); setActivePage("shop"); setMobileMenuOpen(false); }} 
+              className="block w-full text-left font-medium py-2 text-stone-800 hover:text-emerald-800"
+            >
+              Shop All Catalog
+            </button>
+            <button 
+              onClick={() => { setActivePage("sustainability"); setMobileMenuOpen(false); }} 
+              className="block w-full text-left font-medium py-2 text-stone-800 hover:text-emerald-800"
+            >
+              Sustainability & Impact
+            </button>
+            <button 
+              onClick={() => { setActivePage("about"); setMobileMenuOpen(false); }} 
+              className="block w-full text-left font-medium py-2 text-stone-800 hover:text-emerald-800"
+            >
+              About Evergreen
+            </button>
+            <button 
+              onClick={() => { setActivePage("faq"); setMobileMenuOpen(false); }} 
+              className="block w-full text-left font-medium py-2 text-stone-800 hover:text-emerald-800"
+            >
+              Help & FAQs
+            </button>
+            <button 
+              onClick={() => { setActivePage("contact"); setMobileMenuOpen(false); }} 
+              className="block w-full text-left font-medium py-2 text-stone-800 hover:text-emerald-800"
+            >
+              Contact Us
+            </button>
+          </div>
+        )}
+      </header>
+
+      {}
+      <main className="flex-grow">
+        {activePage === "home" && (
+          <HomePage 
+            onNavigateShop={() => setActivePage("shop")}
+            onNavigateCategory={navigateToCategory}
+            onSelectProduct={navigateToProduct}
+            onQuickView={(p) => setQuickViewProduct(p)}
+            onAddToCart={addToCart}
+            onToggleWishlist={toggleWishlist}
+            wishlist={wishlist}
+          />
+        )}
+
+        {activePage === "shop" && (
+          <ShopPage 
+            products={filteredProducts}
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            priceRange={priceRange}
+            setPriceRange={setPriceRange}
+            selectedMaterialFilter={selectedMaterialFilter}
+            setSelectedMaterialFilter={setSelectedMaterialFilter}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            onlyInStock={onlyInStock}
+            setOnlyInStock={setOnlyInStock}
+            onSelectProduct={navigateToProduct}
+            onQuickView={(p) => setQuickViewProduct(p)}
+            onAddToCart={addToCart}
+            onToggleWishlist={toggleWishlist}
+            onToggleCompare={toggleCompare}
+            wishlist={wishlist}
+            compareList={compareList}
+          />
+        )}
+
+        {activePage === "product" && (
+          <ProductDetailPage 
+            productId={selectedProductId}
+            onSelectProduct={navigateToProduct}
+            onAddToCart={addToCart}
+            onToggleWishlist={toggleWishlist}
+            onToggleCompare={toggleCompare}
+            wishlist={wishlist}
+            compareList={compareList}
+            onBack={() => setActivePage("shop")}
+          />
+        )}
+
+        {activePage === "cart" && (
+          <CartPage 
+            cart={cart}
+            cartSubtotal={cartSubtotal}
+            couponDiscount={couponDiscount}
+            estimatedShipping={estimatedShipping}
+            estimatedTax={estimatedTax}
+            grandTotal={grandTotal}
+            appliedCoupon={appliedCoupon}
+            couponInput={couponInput}
+            setCouponInput={setCouponInput}
+            couponError={couponError}
+            onApplyCoupon={applyCouponHandler}
+            onRemoveCoupon={() => setAppliedCoupon(null)}
+            onUpdateQuantity={updateCartQuantity}
+            onRemoveFromCart={removeFromCart}
+            onProceedCheckout={() => setActivePage("checkout")}
+            onContinueShopping={() => setActivePage("shop")}
+          />
+        )}
+
+        {activePage === "checkout" && (
+          <CheckoutPage 
+            cart={cart}
+            cartSubtotal={cartSubtotal}
+            couponDiscount={couponDiscount}
+            estimatedShipping={estimatedShipping}
+            estimatedTax={estimatedTax}
+            grandTotal={grandTotal}
+            onCompleteOrder={(orderData) => {
+              setLastOrder(orderData);
+              clearCart();
+              setActivePage("confirmation");
+              window.scrollTo({ top: 0 });
+            }}
+            onBackToCart={() => setActivePage("cart")}
+          />
+        )}
+
+        {activePage === "confirmation" && (
+          <OrderConfirmationPage 
+            order={lastOrder}
+            onContinueShopping={() => setActivePage("shop")}
+          />
+        )}
+
+        {activePage === "sustainability" && (
+          <SustainabilityPage onShopClick={() => setActivePage("shop")} />
+        )}
+
+        {activePage === "about" && (
+          <AboutPage onShopClick={() => setActivePage("shop")} />
+        )}
+
+        {activePage === "faq" && <FAQPage />}
+
+        {activePage === "contact" && <ContactPage showToast={showToast} />}
+
+        {activePage === "wishlist" && (
+          <WishlistPage 
+            wishlist={wishlist}
+            onSelectProduct={navigateToProduct}
+            onAddToCart={addToCart}
+            onRemoveFromWishlist={(product) => toggleWishlist(product)}
+            onShopNow={() => setActivePage("shop")}
+          />
+        )}
+
+        {activePage === "policy" && <PolicyPage />}
+      </main>
+
+      {}
+      <footer className="bg-stone-900 text-stone-300 pt-16 pb-12 border-t border-stone-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
+          
+          {/* Brand Info */}
+          <div className="lg:col-span-2 space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-emerald-700 text-white flex items-center justify-center">
+                <Leaf className="w-5 h-5" />
+              </div>
+              <span className="text-xl font-bold text-white tracking-tight">EVERGREEN</span>
+            </div>
+            <p className="text-stone-400 text-sm leading-relaxed max-w-sm">
+              We curate high-quality, eco-conscious everyday lifestyle products that help you reduce plastic waste and lead a healthier, greener life without compromise.
+            </p>
+            <div className="pt-2 text-xs text-stone-400 space-y-1">
+              <p>📍 {STORE_CONFIG.address}</p>
+              <p>✉️ {STORE_CONFIG.contactEmail}</p>
+              <p>📞 {STORE_CONFIG.contactPhone}</p>
+            </div>
+          </div>
+
+          {/* Quick Shop Links */}
+          <div>
+            <h4 className="text-white font-semibold text-sm tracking-wider uppercase mb-4 border-b border-stone-800 pb-2">Shop Categories</h4>
+            <ul className="space-y-2.5 text-sm text-stone-400">
+              <li><button onClick={() => navigateToCategory("Reusable Kitchen Essentials")} className="hover:text-emerald-400">Kitchen Essentials</button></li>
+              <li><button onClick={() => navigateToCategory("Reusable Bottles and Drinkware")} className="hover:text-emerald-400">Eco Drinkware</button></li>
+              <li><button onClick={() => navigateToCategory("Personal Care")} className="hover:text-emerald-400">Personal Care</button></li>
+              <li><button onClick={() => navigateToCategory("Zero-Waste Essentials")} className="hover:text-emerald-400">Zero-Waste Swaps</button></li>
+              <li><button onClick={() => navigateToCategory("Sustainable Gifts")} className="hover:text-emerald-400">Sustainable Gifts</button></li>
+            </ul>
+          </div>
+
+          {/* Useful Pages */}
+          <div>
+            <h4 className="text-white font-semibold text-sm tracking-wider uppercase mb-4 border-b border-stone-800 pb-2">Information</h4>
+            <ul className="space-y-2.5 text-sm text-stone-400">
+              <li><button onClick={() => setActivePage("about")} className="hover:text-emerald-400">About Our Brand</button></li>
+              <li><button onClick={() => setActivePage("sustainability")} className="hover:text-emerald-400">Sustainability & Impact</button></li>
+              <li><button onClick={() => setActivePage("faq")} className="hover:text-emerald-400">FAQs & Help</button></li>
+              <li><button onClick={() => setActivePage("contact")} className="hover:text-emerald-400">Contact Support</button></li>
+              <li><button onClick={() => setActivePage("policy")} className="hover:text-emerald-400">Shipping & Returns</button></li>
+            </ul>
+          </div>
+
+          {/* Newsletter Box */}
+          <div>
+            <h4 className="text-white font-semibold text-sm tracking-wider uppercase mb-4 border-b border-stone-800 pb-2">Join Green Club</h4>
+            <p className="text-stone-400 text-xs mb-3">Subscribe to get monthly eco-living tips & exclusive discounts.</p>
+            <form onSubmit={(e) => { e.preventDefault(); showToast("Subscribed! Check your inbox for your 10% coupon code."); e.target.reset(); }} className="space-y-2">
+              <input 
+                type="email" 
+                required 
+                placeholder="Enter your email" 
+                className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-sm text-white placeholder-stone-500 focus:outline-none focus:border-emerald-500"
+              />
+              <button type="submit" className="w-full bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-semibold py-2.5 rounded-lg transition-colors">
+                Subscribe & Save
+              </button>
+            </form>
+          </div>
+
+        </div>
+
+        {/* Bottom copyright line */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 mt-10 border-t border-stone-800 flex flex-col sm:flex-row items-center justify-between text-xs text-stone-400 gap-4">
+          <p>© 2026 EVERGREEN Eco-Store. Built for a cleaner, greener tomorrow.</p>
+          <div className="flex gap-6">
+            <button onClick={() => setActivePage("policy")} className="hover:underline">Privacy Policy</button>
+            <button onClick={() => setActivePage("policy")} className="hover:underline">Terms of Service</button>
+            <button onClick={() => setActivePage("policy")} className="hover:underline">Cookie Settings</button>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+/* =========================================================================
+   STREAMING_CHUNK:Sub-components implementation - HomePage
+   ========================================================================= */
+function HomePage({ onNavigateShop, onNavigateCategory, onSelectProduct, onQuickView, onAddToCart, onToggleWishlist, wishlist }) {
+  const featuredProducts = INITIAL_PRODUCTS.filter(p => p.isFeatured).slice(0, 4);
+  const bestSellers = INITIAL_PRODUCTS.filter(p => p.isBestseller).slice(0, 4);
+
+  return (
+    <div className="space-y-16 pb-16">
+      
+      {/* Hero Section */}
+      <section className="relative bg-emerald-950 text-white overflow-hidden py-20 lg:py-28">
+        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:16px_16px]"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          
+          <div className="space-y-6 text-center lg:text-left">
+            <div className="inline-flex items-center gap-2 bg-emerald-900/80 text-emerald-300 text-xs px-3.5 py-1.5 rounded-full border border-emerald-700">
+              <Leaf className="w-4 h-4" />
+              <span>100% Responsibly Sourced & Plastic-Free Packaging</span>
+            </div>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
+              Everyday Products, <br />
+              <span className="text-emerald-400">Zero Waste Impact.</span>
+            </h1>
+            <p className="text-stone-300 text-base sm:text-lg max-w-xl mx-auto lg:mx-0 font-light leading-relaxed">
+              Discover beautiful, durable eco-friendly swaps for kitchen, bath, personal care, and home. Small conscious choices today create a cleaner world tomorrow.
+            </p>
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2">
+              <button 
+                onClick={onNavigateShop} 
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-7 py-3.5 rounded-xl shadow-lg hover:shadow-emerald-900/50 transition-all flex items-center gap-2"
+              >
+                <span>Shop Sustainable Products</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={onNavigateShop} 
+                className="bg-stone-800/80 hover:bg-stone-700 text-stone-200 font-semibold px-6 py-3.5 rounded-xl border border-stone-700 transition-all"
+              >
+                Explore Bestsellers
+              </button>
+            </div>
+          </div>
+
+          {/* Hero Visual Card Stack */}
+          <div className="relative flex justify-center lg:justify-end">
+            <div className="relative w-full max-w-md aspect-4/3 rounded-2xl overflow-hidden shadow-2xl border-4 border-stone-800/80 group">
+              <img 
+                src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1000&q=80" 
+                alt="Sustainable Lifestyle" 
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 via-transparent to-transparent flex items-end p-6">
+                <div className="text-stone-100">
+                  <p className="text-xs uppercase tracking-widest text-emerald-400 font-bold">Guaranteed Quality</p>
+                  <p className="text-sm font-medium">Built to replace thousands of single-use items in your home.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* Value Badges Bar */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-white p-6 rounded-2xl shadow-sm border border-stone-200">
+          <div className="flex items-center gap-3.5 p-2">
+            <div className="p-3 bg-emerald-100 text-emerald-800 rounded-xl">
+              <Leaf className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="font-bold text-stone-900 text-sm">Natural Materials</h4>
+              <p className="text-stone-500 text-xs">Bamboo, cotton & cork</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3.5 p-2">
+            <div className="p-3 bg-emerald-100 text-emerald-800 rounded-xl">
+              <Truck className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="font-bold text-stone-900 text-sm">Carbon-Neutral Delivery</h4>
+              <p className="text-stone-500 text-xs">Free shipping over ₹999</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3.5 p-2">
+            <div className="p-3 bg-emerald-100 text-emerald-800 rounded-xl">
+              <RefreshCw className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="font-bold text-stone-900 text-sm">30-Day Easy Returns</h4>
+              <p className="text-stone-500 text-xs">Hassle free trial policy</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3.5 p-2">
+            <div className="p-3 bg-emerald-100 text-emerald-800 rounded-xl">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="font-bold text-stone-900 text-sm">Verified Non-Toxic</h4>
+              <p className="text-stone-500 text-xs">BPA free & food safe</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <span className="text-xs font-bold text-emerald-800 uppercase tracking-widest">Shop By Category</span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900">Popular Sustainable Collections</h2>
+          </div>
+          <button onClick={onNavigateShop} className="text-emerald-800 hover:text-emerald-900 text-sm font-semibold flex items-center gap-1">
+            Browse All Categories <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          {[
+            { name: "Reusable Kitchen Essentials", icon: "🍳", img: "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=400&q=80" },
+            { name: "Personal Care", icon: "🧼", img: "https://images.unsplash.com/photo-1607006344380-b6775a0824a7?auto=format&fit=crop&w=400&q=80" },
+            { name: "Reusable Bottles and Drinkware", icon: "🥤", img: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=400&q=80" },
+            { name: "Eco-Friendly Cleaning", icon: "🧽", img: "https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?auto=format&fit=crop&w=400&q=80" },
+            { name: "Zero-Waste Essentials", icon: "🌱", img: "https://images.unsplash.com/photo-1597484661643-2f5fef640dd1?auto=format&fit=crop&w=400&q=80" },
+            { name: "Sustainable Gifts", icon: "🎁", img: "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=400&q=80" },
+          ].map((cat, idx) => (
+            <div 
+              key={idx}
+              onClick={() => onNavigateCategory(cat.name)}
+              className="group cursor-pointer bg-white rounded-xl overflow-hidden shadow-sm border border-stone-200 hover:shadow-md transition-all text-center p-3 flex flex-col items-center"
+            >
+              <div className="w-full h-24 rounded-lg overflow-hidden mb-3 relative">
+                <img src={cat.img} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                <span className="absolute top-1 right-1 bg-stone-900/70 text-white text-xs px-1.5 py-0.5 rounded">{cat.icon}</span>
+              </div>
+              <h3 className="text-xs font-bold text-stone-800 line-clamp-2 group-hover:text-emerald-800 transition-colors">{cat.name}</h3>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-xs font-bold text-emerald-800 uppercase tracking-widest">Handpicked Picks</span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900">Featured Eco Favorites</h2>
+          </div>
+          <button onClick={onNavigateShop} className="text-emerald-800 text-sm font-semibold hover:underline">View All</button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {featuredProducts.map((product) => (
+            <ProductCard 
+              key={product.id}
+              product={product}
+              onSelect={onSelectProduct}
+              onQuickView={onQuickView}
+              onAddToCart={onAddToCart}
+              onToggleWishlist={onToggleWishlist}
+              isWishlisted={wishlist.some(w => w.id === product.id)}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* Sustainability Impact Banner */}
+      <section className="bg-emerald-900 text-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+          <div className="space-y-2 p-6 rounded-2xl bg-emerald-950/50 border border-emerald-800">
+            <h3 className="text-4xl font-extrabold text-emerald-300">50,000+</h3>
+            <p className="text-stone-300 text-sm">Single-use Plastic Items Prevented</p>
+          </div>
+          <div className="space-y-2 p-6 rounded-2xl bg-emerald-950/50 border border-emerald-800">
+            <h3 className="text-4xl font-extrabold text-emerald-300">100%</h3>
+            <p className="text-stone-300 text-sm">Plastic-Free Recyclable Packaging</p>
+          </div>
+          <div className="space-y-2 p-6 rounded-2xl bg-emerald-950/50 border border-emerald-800">
+            <h3 className="text-4xl font-extrabold text-emerald-300">Zero</h3>
+            <p className="text-stone-300 text-sm">Harmful Harsh Chemicals or Microplastics</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Best Sellers Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <div>
+          <span className="text-xs font-bold text-emerald-800 uppercase tracking-widest">Customer Loved</span>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900">Bestselling Swaps</h2>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {bestSellers.map((product) => (
+            <ProductCard 
+              key={product.id}
+              product={product}
+              onSelect={onSelectProduct}
+              onQuickView={onQuickView}
+              onAddToCart={onAddToCart}
+              onToggleWishlist={onToggleWishlist}
+              isWishlisted={wishlist.some(w => w.id === product.id)}
+            />
+          ))}
+        </div>
+      </section>
+
+    </div>
+  );
+}
+
+/* =========================================================================
+   STREAMING_CHUNK:Sub-components implementation - ShopPage
+   ========================================================================= */
+function ShopPage({
+  products,
+  selectedCategory,
+  setSelectedCategory,
+  searchQuery,
+  setSearchQuery,
+  priceRange,
+  setPriceRange,
+  selectedMaterialFilter,
+  setSelectedMaterialFilter,
+  sortBy,
+  setSortBy,
+  onlyInStock,
+  setOnlyInStock,
+  onSelectProduct,
+  onQuickView,
+  onAddToCart,
+  onToggleWishlist,
+  onToggleCompare,
+  wishlist,
+  compareList
+}) {
+  const [showFiltersMobile, setShowFiltersMobile] = useState(false);
+
+  const materialsList = ["All", "Bamboo", "Cotton", "Stainless Steel", "Coconut", "Glass", "Cork"];
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+      
+      {/* Header Banner */}
+      <div className="bg-stone-200/60 rounded-2xl p-6 sm:p-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold text-stone-900">{selectedCategory}</h1>
+          <p className="text-stone-600 text-sm mt-1">Showing {products.length} sustainable products curated for everyday living.</p>
+        </div>
+        <button 
+          onClick={() => setShowFiltersMobile(!showFiltersMobile)}
+          className="lg:hidden bg-stone-900 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2"
+        >
+          <SlidersHorizontal className="w-4 h-4" />
+          <span>Filters</span>
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        
+        {}
+        <aside className={`space-y-6 lg:block ${showFiltersMobile ? "block" : "hidden"} bg-white p-6 rounded-2xl border border-stone-200 h-fit`}>
+          
+          <div className="flex items-center justify-between border-b border-stone-200 pb-3">
+            <h3 className="font-bold text-stone-900 text-base flex items-center gap-2">
+              <Filter className="w-4 h-4 text-emerald-700" />
+              Filter Products
+            </h3>
+            <button 
+              onClick={() => {
+                setSelectedCategory("All Products");
+                setSearchQuery("");
+                setPriceRange([0, 3000]);
+                setSelectedMaterialFilter("All");
+                setOnlyInStock(false);
+              }}
+              className="text-xs text-emerald-800 hover:underline font-semibold"
+            >
+              Reset All
+            </button>
+          </div>
+
+          {/* Categories */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-stone-900 uppercase tracking-wider block">Category</label>
+            <div className="space-y-1 max-h-56 overflow-y-auto pr-1">
+              {CATEGORIES_LIST.map((cat, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`w-full text-left text-xs py-1.5 px-2 rounded-lg transition-colors flex items-center justify-between ${selectedCategory === cat ? "bg-emerald-100 text-emerald-900 font-bold" : "text-stone-600 hover:bg-stone-100"}`}
+                >
+                  <span>{cat}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Price Range Slider */}
+          <div className="space-y-2 border-t border-stone-200 pt-4">
+            <div className="flex justify-between items-center text-xs">
+              <label className="font-bold text-stone-900 uppercase tracking-wider">Max Price</label>
+              <span className="font-bold text-emerald-800">₹{priceRange[1]}</span>
+            </div>
+            <input 
+              type="range" 
+              min="200" 
+              max="3000" 
+              step="100"
+              value={priceRange[1]} 
+              onChange={(e) => setPriceRange([0, Number(e.target.value)])}
+              className="w-full accent-emerald-700 cursor-pointer"
+            />
+          </div>
+
+          {/* Material Filter */}
+          <div className="space-y-2 border-t border-stone-200 pt-4">
+            <label className="text-xs font-bold text-stone-900 uppercase tracking-wider block">Eco Material</label>
+            <div className="flex flex-wrap gap-1.5">
+              {materialsList.map((mat, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedMaterialFilter(mat)}
+                  className={`text-xs px-2.5 py-1 rounded-full border transition-all ${selectedMaterialFilter === mat ? "bg-emerald-800 text-white border-emerald-800" : "bg-stone-50 border-stone-300 text-stone-700 hover:bg-stone-100"}`}
+                >
+                  {mat}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Availability Checkbox */}
+          <div className="border-t border-stone-200 pt-4">
+            <label className="flex items-center gap-2 text-xs font-medium text-stone-700 cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={onlyInStock}
+                onChange={(e) => setOnlyInStock(e.target.checked)}
+                className="rounded text-emerald-700 focus:ring-emerald-700"
+              />
+              <span>In Stock Only</span>
+            </label>
+          </div>
+
+        </aside>
+
+        {}
+        <div className="lg:col-span-3 space-y-6">
+          
+          {/* Sorting Toolbar */}
+          <div className="bg-white p-4 rounded-xl border border-stone-200 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-medium">
+            <span className="text-stone-500">Showing <strong className="text-stone-900">{products.length}</strong> items</span>
+            <div className="flex items-center gap-2">
+              <span className="text-stone-500">Sort By:</span>
+              <select 
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="bg-stone-100 border border-stone-300 rounded-lg px-3 py-1.5 text-stone-800 focus:outline-none focus:ring-1 focus:ring-emerald-700"
+              >
+                <option value="featured">Featured Picks</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="rating">Highest Rated</option>
+                <option value="name">Name: A to Z</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Product Cards Grid */}
+          {products.length === 0 ? (
+            <div className="bg-white rounded-2xl p-12 text-center border border-stone-200 space-y-4">
+              <Leaf className="w-12 h-12 text-stone-400 mx-auto" />
+              <h3 className="text-lg font-bold text-stone-800">No matching eco products found</h3>
+              <p className="text-stone-500 text-sm max-w-sm mx-auto">Try broadening your search query or resetting filters.</p>
+              <button 
+                onClick={() => {
+                  setSelectedCategory("All Products");
+                  setSearchQuery("");
+                  setPriceRange([0, 3000]);
+                  setSelectedMaterialFilter("All");
+                  setOnlyInStock(false);
+                }}
+                className="bg-emerald-800 text-white text-xs font-semibold px-4 py-2 rounded-lg"
+              >
+                Reset Filters
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {products.map((product) => (
+                <ProductCard 
+                  key={product.id}
+                  product={product}
+                  onSelect={onSelectProduct}
+                  onQuickView={onQuickView}
+                  onAddToCart={onAddToCart}
+                  onToggleWishlist={onToggleWishlist}
+                  onToggleCompare={onToggleCompare}
+                  isWishlisted={wishlist.some(w => w.id === product.id)}
+                  isCompared={compareList.some(c => c.id === product.id)}
+                />
+              ))}
+            </div>
+          )}
+
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================================
+   STREAMING_CHUNK:Sub-components implementation - ProductCard
+   ========================================================================= */
+function ProductCard({ product, onSelect, onQuickView, onAddToCart, onToggleWishlist, onToggleCompare, isWishlisted, isCompared }) {
+  const discountPercent = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
+
+  return (
+    <div className="bg-white rounded-2xl overflow-hidden border border-stone-200 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group relative">
+      
+      {/* Badges Overlay */}
+      <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5 items-start">
+        {discountPercent > 0 && (
+          <span className="bg-emerald-800 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+            {discountPercent}% OFF
+          </span>
+        )}
+        {product.isBestseller && (
+          <span className="bg-amber-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+            BESTSELLER
+          </span>
+        )}
+      </div>
+
+      {/* Action Icons (Wishlist & Quick View) */}
+      <div className="absolute top-3 right-3 z-10 flex flex-col gap-2">
+        <button 
+          onClick={(e) => { e.stopPropagation(); onToggleWishlist(product); }}
+          className="w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm text-stone-700 hover:text-emerald-800 flex items-center justify-center shadow-md transition-all hover:scale-110"
+          title="Add to Wishlist"
+        >
+          <Heart className={`w-4 h-4 ${isWishlisted ? "fill-emerald-800 text-emerald-800" : ""}`} />
+        </button>
+        {onQuickView && (
+          <button 
+            onClick={(e) => { e.stopPropagation(); onQuickView(product); }}
+            className="w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm text-stone-700 hover:text-emerald-800 flex items-center justify-center shadow-md transition-all hover:scale-110"
+            title="Quick View"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
+        )}
+        {onToggleCompare && (
+          <button 
+            onClick={(e) => { e.stopPropagation(); onToggleCompare(product); }}
+            className={`w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-md transition-all hover:scale-110 ${isCompared ? "text-emerald-800 bg-emerald-100" : "text-stone-700"}`}
+            title="Compare Spec"
+          >
+            <Scale className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      {/* Image Thumbnail */}
+      <div 
+        onClick={() => onSelect(product.id)}
+        className="w-full h-52 bg-stone-100 overflow-hidden cursor-pointer relative"
+      >
+        <img 
+          src={product.images[0]} 
+          alt={product.name} 
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+        />
+      </div>
+
+      {/* Product Details Content */}
+      <div className="p-4 flex-grow flex flex-col justify-between space-y-3">
+        <div className="space-y-1">
+          <span className="text-[10px] font-bold text-emerald-800 tracking-wider uppercase">{product.category}</span>
+          <h3 
+            onClick={() => onSelect(product.id)}
+            className="font-bold text-stone-900 text-sm line-clamp-2 cursor-pointer hover:text-emerald-800 transition-colors leading-snug"
+          >
+            {product.name}
+          </h3>
+          <p className="text-stone-500 text-xs line-clamp-2 font-normal leading-relaxed">{product.shortDesc}</p>
+        </div>
+
+        {/* Rating and Reviews */}
+        <div className="flex items-center gap-1.5 text-xs text-stone-600">
+          <div className="flex text-amber-500">
+            <Star className="w-3.5 h-3.5 fill-amber-500" />
+          </div>
+          <span className="font-semibold text-stone-800">{product.rating}</span>
+          <span className="text-stone-400">({product.reviewCount})</span>
+        </div>
+
+        {/* Price & Add to Cart Action */}
+        <div className="pt-2 border-t border-stone-100 flex items-center justify-between gap-2">
+          <div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-base font-extrabold text-stone-900">₹{product.price}</span>
+              {product.originalPrice > product.price && (
+                <span className="text-xs text-stone-400 line-through">₹{product.originalPrice}</span>
+              )}
+            </div>
+          </div>
+          <button 
+            onClick={() => onAddToCart(product, 1)}
+            className="bg-emerald-800 hover:bg-emerald-900 text-white p-2.5 rounded-xl transition-all shadow-sm flex items-center justify-center shrink-0"
+            title="Add to Cart"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  );
+}
+
+/* =========================================================================
+   STREAMING_CHUNK:Sub-components implementation - ProductDetailPage
+   ========================================================================= */
+function ProductDetailPage({ productId, onSelectProduct, onAddToCart, onToggleWishlist, onToggleCompare, wishlist, compareList, onBack }) {
+  const product = INITIAL_PRODUCTS.find(p => p.id === productId) || INITIAL_PRODUCTS[0];
+  const [selectedImg, setSelectedImg] = useState(product.images[0]);
+  const [quantity, setQuantity] = useState(1);
+  const [selectedVariant, setSelectedVariant] = useState(
+    product.variants[0] ? { [product.variants[0].type]: product.variants[0].options[0] } : {}
+  );
+  const [activeTab, setActiveTab] = useState("description");
+
+  useEffect(() => {
+    setSelectedImg(product.images[0]);
+    setQuantity(1);
+  }, [product]);
+
+  const relatedProducts = INITIAL_PRODUCTS.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+      
+      {/* Back & Breadcrumb navigation */}
+      <div className="flex items-center justify-between text-xs text-stone-500">
+        <button onClick={onBack} className="flex items-center gap-1 font-semibold text-emerald-800 hover:underline">
+          <ArrowLeft className="w-4 h-4" /> Back to Catalog
+        </button>
+        <span>Catalog / {product.category} / <strong className="text-stone-800">{product.name}</strong></span>
+      </div>
+
+      {/* Main Grid: Gallery & Information */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 bg-white p-6 sm:p-10 rounded-2xl border border-stone-200 shadow-sm">
+        
+        {/* Gallery */}
+        <div className="space-y-4">
+          <div className="w-full h-80 sm:h-96 bg-stone-100 rounded-xl overflow-hidden border border-stone-200">
+            <img src={selectedImg} alt={product.name} className="w-full h-full object-cover" />
+          </div>
+          {product.images.length > 1 && (
+            <div className="flex gap-3">
+              {product.images.map((img, idx) => (
+                <button 
+                  key={idx}
+                  onClick={() => setSelectedImg(img)}
+                  className={`w-20 h-20 rounded-lg border-2 overflow-hidden ${selectedImg === img ? "border-emerald-700" : "border-stone-200"}`}
+                >
+                  <img src={img} alt="thumb" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Product Details Info */}
+        <div className="space-y-6">
+          
+          <div>
+            <span className="text-xs font-bold text-emerald-800 tracking-wider uppercase">{product.category}</span>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-stone-900 mt-1">{product.name}</h1>
+            <div className="flex items-center gap-3 mt-2 text-xs text-stone-600">
+              <div className="flex text-amber-500">
+                <Star className="w-4 h-4 fill-amber-500" />
+              </div>
+              <span className="font-bold text-stone-800">{product.rating}</span>
+              <span>({product.reviewCount} customer reviews)</span>
+              <span className="text-stone-300">|</span>
+              <span className="text-emerald-800 font-semibold">SKU: {product.sku}</span>
+            </div>
+          </div>
+
+          {/* Pricing */}
+          <div className="flex items-baseline gap-3 bg-stone-50 p-4 rounded-xl border border-stone-200">
+            <span className="text-3xl font-extrabold text-stone-900">₹{product.price}</span>
+            {product.originalPrice > product.price && (
+              <span className="text-sm text-stone-400 line-through">₹{product.originalPrice}</span>
+            )}
+            <span className="ml-auto text-xs font-semibold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full">
+              In Stock ({product.stock} left)
+            </span>
+          </div>
+
+          <p className="text-stone-600 text-sm leading-relaxed">{product.fullDesc}</p>
+
+          {/* Variant Selector */}
+          {product.variants.map((v, idx) => (
+            <div key={idx} className="space-y-2">
+              <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">{v.type}</label>
+              <div className="flex flex-wrap gap-2">
+                {v.options.map((opt, oIdx) => (
+                  <button
+                    key={oIdx}
+                    onClick={() => setSelectedVariant(prev => ({ ...prev, [v.type]: opt }))}
+                    className={`text-xs px-3 py-2 rounded-lg border font-medium transition-all ${selectedVariant[v.type] === opt ? "bg-emerald-900 text-white border-emerald-900 shadow-sm" : "bg-stone-50 border-stone-300 text-stone-700 hover:bg-stone-100"}`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {/* Quantity Controls & Primary Actions */}
+          <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-stone-200">
+            <div className="flex items-center border border-stone-300 rounded-xl bg-stone-50 w-fit">
+              <button 
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                className="p-3 text-stone-600 hover:text-stone-900"
+              >
+                <Minus className="w-4 h-4" />
+              </button>
+              <span className="px-4 text-sm font-bold text-stone-900">{quantity}</span>
+              <button 
+                onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                className="p-3 text-stone-600 hover:text-stone-900"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+
+            <button 
+              onClick={() => onAddToCart(product, quantity, selectedVariant)}
+              className="flex-1 bg-emerald-800 hover:bg-emerald-900 text-white font-bold py-3.5 px-6 rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+            >
+              <ShoppingBag className="w-5 h-5" />
+              <span>Add To Cart • ₹{product.price * quantity}</span>
+            </button>
+
+            <button 
+              onClick={() => onToggleWishlist(product)}
+              className="p-3.5 border border-stone-300 rounded-xl hover:bg-stone-100 text-stone-700 flex items-center justify-center"
+              title="Save to Wishlist"
+            >
+              <Heart className={`w-5 h-5 ${wishlist.some(w => w.id === product.id) ? "fill-emerald-800 text-emerald-800" : ""}`} />
+            </button>
+          </div>
+
+          {/* Eco Impact Box */}
+          <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl flex items-start gap-3">
+            <Leaf className="w-5 h-5 text-emerald-800 shrink-0 mt-0.5" />
+            <div className="text-xs text-emerald-950">
+              <strong className="block font-bold">Eco Impact Highlight</strong>
+              <span>{product.sustainabilityImpact}</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* Tabs: Specs & Care */}
+      <div className="bg-white rounded-2xl border border-stone-200 p-6 sm:p-8 space-y-6">
+        <div className="flex border-b border-stone-200 gap-6 text-sm font-bold">
+          <button 
+            onClick={() => setActiveTab("description")}
+            className={`pb-3 border-b-2 transition-colors ${activeTab === "description" ? "border-emerald-800 text-emerald-800" : "border-transparent text-stone-500 hover:text-stone-800"}`}
+          >
+            Materials & Specs
+          </button>
+          <button 
+            onClick={() => setActiveTab("care")}
+            className={`pb-3 border-b-2 transition-colors ${activeTab === "care" ? "border-emerald-800 text-emerald-800" : "border-transparent text-stone-500 hover:text-stone-800"}`}
+          >
+            Care Instructions
+          </button>
+        </div>
+
+        {activeTab === "description" && (
+          <div className="space-y-4 text-sm text-stone-700">
+            <h4 className="font-bold text-stone-900">Key Materials</h4>
+            <ul className="list-disc list-inside space-y-1 text-stone-600">
+              {product.materials.map((m, idx) => <li key={idx}>{m}</li>)}
+            </ul>
+          </div>
+        )}
+
+        {activeTab === "care" && (
+          <p className="text-sm text-stone-600 leading-relaxed">{product.care}</p>
+        )}
+      </div>
+
+      {/* Related Products */}
+      {relatedProducts.length > 0 && (
+        <div className="space-y-6">
+          <h3 className="text-xl font-bold text-stone-900">You Might Also Like</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {relatedProducts.map(p => (
+              <ProductCard 
+                key={p.id} 
+                product={p} 
+                onSelect={onSelectProduct} 
+                onAddToCart={onAddToCart}
+                onToggleWishlist={onToggleWishlist}
+                isWishlisted={wishlist.some(w => w.id === p.id)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+/* =========================================================================
+   STREAMING_CHUNK:Sub-components implementation - CartPage
+   ========================================================================= */
+function CartPage({
+  cart,
+  cartSubtotal,
+  couponDiscount,
+  estimatedShipping,
+  estimatedTax,
+  grandTotal,
+  appliedCoupon,
+  couponInput,
+  setCouponInput,
+  couponError,
+  onApplyCoupon,
+  onRemoveCoupon,
+  onUpdateQuantity,
+  onRemoveFromCart,
+  onProceedCheckout,
+  onContinueShopping
+}) {
+  const freeShippingNeeded = Math.max(0, STORE_CONFIG.freeShippingThreshold - cartSubtotal);
+  const freeShippingPercent = Math.min(100, (cartSubtotal / STORE_CONFIG.freeShippingThreshold) * 100);
+
+  if (cart.length === 0) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-20 text-center space-y-6">
+        <div className="w-20 h-20 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center mx-auto">
+          <ShoppingBag className="w-10 h-10" />
+        </div>
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900">Your Cart is Empty</h2>
+        <p className="text-stone-500 text-sm max-w-sm mx-auto">You haven't added any sustainable products to your cart yet.</p>
+        <button 
+          onClick={onContinueShopping}
+          className="bg-emerald-800 hover:bg-emerald-900 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-md"
+        >
+          Explore Catalog
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+      
+      <h1 className="text-3xl font-extrabold text-stone-900">Shopping Cart ({cart.length} items)</h1>
+
+      {/* Free Shipping Progress Indicator */}
+      <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl space-y-2">
+        <div className="flex justify-between text-xs font-bold text-emerald-900">
+          <span>
+            {freeShippingNeeded === 0 
+              ? "🎉 Congratulations! You unlocked FREE Carbon-Neutral Delivery!" 
+              : `Add ₹${freeShippingNeeded} more for FREE shipping!`}
+          </span>
+          <span>{Math.round(freeShippingPercent)}%</span>
+        </div>
+        <div className="w-full bg-emerald-200 h-2 rounded-full overflow-hidden">
+          <div className="bg-emerald-700 h-full transition-all duration-500" style={{ width: `${freeShippingPercent}%` }}></div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Cart Line Items */}
+        <div className="lg:col-span-2 space-y-4">
+          {cart.map((item, idx) => {
+            const variantKey = item.selectedVariant ? JSON.stringify(item.selectedVariant) : "default";
+            return (
+              <div key={idx} className="bg-white p-4 sm:p-6 rounded-2xl border border-stone-200 flex gap-4 items-center">
+                <img src={item.images[0]} alt={item.name} className="w-20 h-20 object-cover rounded-xl bg-stone-100 shrink-0" />
+                
+                <div className="flex-grow space-y-1">
+                  <h3 className="font-bold text-stone-900 text-sm">{item.name}</h3>
+                  {item.selectedVariant && (
+                    <p className="text-xs text-stone-500">
+                      {Object.entries(item.selectedVariant).map(([k, v]) => `${k}: ${v}`).join(", ")}
+                    </p>
+                  )}
+                  <p className="text-xs font-bold text-stone-800">₹{item.price}</p>
+                </div>
+
+                {/* Quantity Controls */}
+                <div className="flex items-center border border-stone-300 rounded-lg bg-stone-50">
+                  <button 
+                    onClick={() => onUpdateQuantity(item.id, variantKey, item.quantity - 1)}
+                    className="p-1.5 text-stone-600 hover:text-stone-900"
+                  >
+                    <Minus className="w-3.5 h-3.5" />
+                  </button>
+                  <span className="px-3 text-xs font-bold">{item.quantity}</span>
+                  <button 
+                    onClick={() => onUpdateQuantity(item.id, variantKey, item.quantity + 1)}
+                    className="p-1.5 text-stone-600 hover:text-stone-900"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <div className="text-right space-y-1">
+                  <span className="font-extrabold text-stone-900 text-sm">₹{item.price * item.quantity}</span>
+                  <button 
+                    onClick={() => onRemoveFromCart(item.id, variantKey)}
+                    className="block text-xs text-red-600 hover:underline ml-auto"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Order Calculation Summary */}
+        <div className="space-y-6">
+          <div className="bg-white p-6 rounded-2xl border border-stone-200 space-y-4">
+            <h3 className="font-bold text-stone-900 text-base border-b border-stone-200 pb-3">Order Summary</h3>
+
+            {/* Coupon Code Input Form */}
+            <form onSubmit={onApplyCoupon} className="space-y-2">
+              <label className="text-xs font-bold text-stone-700 block">Promo Code</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  placeholder="e.g. ECO10" 
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value)}
+                  className="bg-stone-50 border border-stone-300 rounded-lg px-3 py-2 text-xs flex-grow uppercase font-semibold"
+                />
+                <button type="submit" className="bg-stone-900 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-stone-800">
+                  Apply
+                </button>
+              </div>
+              {couponError && <p className="text-[11px] text-red-600 font-medium">{couponError}</p>}
+            </form>
+
+            {/* Applied Coupon Badge */}
+            {appliedCoupon && (
+              <div className="bg-emerald-100 text-emerald-900 p-2.5 rounded-lg flex items-center justify-between text-xs">
+                <span>Code <strong>{appliedCoupon.code}</strong> Applied</span>
+                <button onClick={onRemoveCoupon} className="text-emerald-950 hover:underline font-bold">Remove</button>
+              </div>
+            )}
+
+            {/* Financial Breakdown */}
+            <div className="space-y-2.5 text-xs border-t border-stone-200 pt-3 text-stone-600">
+              <div className="flex justify-between">
+                <span>Cart Subtotal</span>
+                <span className="font-bold text-stone-900">₹{cartSubtotal}</span>
+              </div>
+              {couponDiscount > 0 && (
+                <div className="flex justify-between text-emerald-800 font-semibold">
+                  <span>Coupon Discount</span>
+                  <span>-₹{couponDiscount}</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span>Estimated Shipping</span>
+                <span>{estimatedShipping === 0 ? "FREE" : `₹${estimatedShipping}`}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Estimated GST (5%)</span>
+                <span>₹{estimatedTax}</span>
+              </div>
+              <div className="flex justify-between text-sm font-extrabold text-stone-900 border-t border-stone-200 pt-3">
+                <span>Grand Total</span>
+                <span className="text-emerald-800 text-lg">₹{grandTotal}</span>
+              </div>
+            </div>
+
+            <button 
+              onClick={onProceedCheckout}
+              className="w-full bg-emerald-800 hover:bg-emerald-900 text-white font-bold py-3.5 rounded-xl shadow-md transition-all text-sm"
+            >
+              Proceed to Checkout
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================================
+   STREAMING_CHUNK:Sub-components implementation - CheckoutPage
+   ========================================================================= */
+function CheckoutPage({ cart, cartSubtotal, couponDiscount, estimatedShipping, estimatedTax, grandTotal, onCompleteOrder, onBackToCart }) {
+  const [formData, setFormData] = useState({
+    fullName: "Arjun Sharma",
+    email: "arjun.sharma@example.com",
+    phone: "9876543210",
+    address: "Flat 402, Green Palm Apartments, Indiranagar",
+    city: "Bengaluru",
+    state: "Karnataka",
+    zip: "560038",
+    paymentMethod: "upi" // upi, card, cod
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const orderData = {
+      orderId: `EVG-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+      date: new Date().toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' }),
+      customer: formData,
+      items: cart,
+      subtotal: cartSubtotal,
+      discount: couponDiscount,
+      shipping: estimatedShipping,
+      tax: estimatedTax,
+      total: grandTotal
+    };
+    onCompleteOrder(orderData);
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+      
+      <button onClick={onBackToCart} className="text-xs font-semibold text-emerald-800 flex items-center gap-1">
+        <ArrowLeft className="w-4 h-4" /> Return to Cart
+      </button>
+
+      <h1 className="text-3xl font-extrabold text-stone-900">Checkout & Payment</h1>
+
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Shipping Form */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-white p-6 rounded-2xl border border-stone-200 space-y-4">
+            <h3 className="font-bold text-stone-900 text-base">1. Delivery Address</h3>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-stone-700 block mb-1">Full Name</label>
+                <input 
+                  type="text" required value={formData.fullName}
+                  onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+                  className="w-full bg-stone-50 border border-stone-300 rounded-lg p-2.5 text-xs"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-stone-700 block mb-1">Email Address</label>
+                <input 
+                  type="email" required value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  className="w-full bg-stone-50 border border-stone-300 rounded-lg p-2.5 text-xs"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="text-xs font-semibold text-stone-700 block mb-1">Street Address</label>
+                <input 
+                  type="text" required value={formData.address}
+                  onChange={(e) => setFormData({...formData, address: e.target.value})}
+                  className="w-full bg-stone-50 border border-stone-300 rounded-lg p-2.5 text-xs"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-stone-700 block mb-1">City</label>
+                <input 
+                  type="text" required value={formData.city}
+                  onChange={(e) => setFormData({...formData, city: e.target.value})}
+                  className="w-full bg-stone-50 border border-stone-300 rounded-lg p-2.5 text-xs"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-stone-700 block mb-1">Pincode</label>
+                <input 
+                  type="text" required value={formData.zip}
+                  onChange={(e) => setFormData({...formData, zip: e.target.value})}
+                  className="w-full bg-stone-50 border border-stone-300 rounded-lg p-2.5 text-xs"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Demo Payment Method */}
+          <div className="bg-white p-6 rounded-2xl border border-stone-200 space-y-4">
+            <h3 className="font-bold text-stone-900 text-base">2. Payment Method (Demo)</h3>
+            <div className="space-y-2">
+              {[
+                { id: "upi", title: "UPI / Google Pay / PhonePe", desc: "Instant zero-fee transfer" },
+                { id: "card", title: "Credit or Debit Card", desc: "Visa, Mastercard, RuPay" },
+                { id: "cod", title: "Cash on Delivery (COD)", desc: "Pay when package arrives" }
+              ].map((m) => (
+                <label key={m.id} className={`flex items-center justify-between p-3.5 rounded-xl border cursor-pointer ${formData.paymentMethod === m.id ? "bg-emerald-50 border-emerald-700" : "border-stone-200"}`}>
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="radio" name="pm" value={m.id} 
+                      checked={formData.paymentMethod === m.id}
+                      onChange={() => setFormData({...formData, paymentMethod: m.id})}
+                      className="text-emerald-800 focus:ring-emerald-800"
+                    />
+                    <div>
+                      <span className="font-bold text-xs text-stone-900 block">{m.title}</span>
+                      <span className="text-[10px] text-stone-500">{m.desc}</span>
+                    </div>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Summary sidebar */}
+        <div className="bg-white p-6 rounded-2xl border border-stone-200 h-fit space-y-4">
+          <h3 className="font-bold text-stone-900 text-base border-b border-stone-200 pb-2">Order Summary</h3>
+          <div className="space-y-2 text-xs text-stone-600">
+            <div className="flex justify-between"><span>Subtotal</span><span>₹{cartSubtotal}</span></div>
+            <div className="flex justify-between"><span>Discount</span><span>-₹{couponDiscount}</span></div>
+            <div className="flex justify-between"><span>Shipping</span><span>₹{estimatedShipping}</span></div>
+            <div className="flex justify-between"><span>GST Tax</span><span>₹{estimatedTax}</span></div>
+            <div className="flex justify-between font-bold text-stone-900 text-sm border-t border-stone-200 pt-2">
+              <span>Total Payable</span><span className="text-emerald-800">₹{grandTotal}</span>
+            </div>
+          </div>
+          <button 
+            type="submit"
+            className="w-full bg-emerald-800 hover:bg-emerald-900 text-white font-bold py-3.5 rounded-xl transition-all shadow-md text-sm"
+          >
+            Place Demo Order • ₹{grandTotal}
+          </button>
+        </div>
+
+      </form>
+    </div>
+  );
+}
+
+/* =========================================================================
+   STREAMING_CHUNK:Sub-components implementation - OrderConfirmationPage
+   ========================================================================= */
+function OrderConfirmationPage({ order, onContinueShopping }) {
+  if (!order) return null;
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-8">
+      
+      <div className="w-16 h-16 bg-emerald-100 text-emerald-800 rounded-full flex items-center justify-center mx-auto">
+        <CheckCircle className="w-10 h-10" />
+      </div>
+
+      <div className="space-y-2">
+        <h1 className="text-3xl font-extrabold text-stone-900">Thank You For Your Order!</h1>
+        <p className="text-stone-600 text-sm">Order Reference: <strong className="text-emerald-800">{order.orderId}</strong></p>
+        <p className="text-xs text-stone-500">A confirmation receipt has been generated for your record.</p>
+      </div>
+
+      {/* Summary Box */}
+      <div className="bg-white p-6 rounded-2xl border border-stone-200 text-left space-y-4">
+        <h3 className="font-bold text-stone-900 text-sm border-b border-stone-200 pb-2">Items Purchased</h3>
+        <div className="space-y-3">
+          {order.items.map((item, idx) => (
+            <div key={idx} className="flex justify-between text-xs text-stone-700">
+              <span>{item.quantity}x {item.name}</span>
+              <span className="font-bold">₹{item.price * item.quantity}</span>
+            </div>
+          ))}
+        </div>
+        <div className="border-t border-stone-200 pt-3 flex justify-between text-sm font-extrabold text-stone-900">
+          <span>Grand Total Paid</span>
+          <span className="text-emerald-800">₹{order.total}</span>
+        </div>
+      </div>
+
+      <div className="flex justify-center gap-4">
+        <button 
+          onClick={() => window.print()} 
+          className="bg-stone-200 text-stone-800 text-xs font-semibold px-5 py-2.5 rounded-xl flex items-center gap-2"
+        >
+          <Printer className="w-4 h-4" /> Print Receipt
+        </button>
+        <button 
+          onClick={onContinueShopping}
+          className="bg-emerald-800 text-white text-xs font-semibold px-6 py-2.5 rounded-xl"
+        >
+          Continue Shopping
+        </button>
+      </div>
+
+    </div>
+  );
+}
+
+/* =========================================================================
+   STREAMING_CHUNK:Sub-components implementation - QuickViewModal
+   ========================================================================= */
+function QuickViewModal({ product, onClose, onAddToCart, onViewFullDetails }) {
+  return (
+    <div className="fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl max-w-2xl w-full p-6 relative space-y-4 shadow-2xl border border-stone-200">
+        <button onClick={onClose} className="absolute top-4 right-4 text-stone-400 hover:text-stone-700">
+          <X className="w-6 h-6" />
+        </button>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
+          <img src={product.images[0]} alt={product.name} className="w-full h-56 object-cover rounded-xl bg-stone-100" />
+          <div className="space-y-3">
+            <span className="text-[10px] font-bold text-emerald-800 uppercase">{product.category}</span>
+            <h3 className="font-bold text-stone-900 text-lg">{product.name}</h3>
+            <p className="text-xs text-stone-600 line-clamp-3">{product.shortDesc}</p>
+            <div className="text-xl font-extrabold text-stone-900">₹{product.price}</div>
+            
+            <div className="flex gap-2 pt-2">
+              <button 
+                onClick={() => { onAddToCart(product, 1); onClose(); }}
+                className="flex-1 bg-emerald-800 text-white text-xs font-bold py-2.5 rounded-xl"
+              >
+                Add to Cart
+              </button>
+              <button 
+                onClick={onViewFullDetails}
+                className="bg-stone-100 text-stone-800 text-xs font-bold px-4 py-2.5 rounded-xl"
+              >
+                Full Details
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================================
+   STREAMING_CHUNK:Sub-components implementation - CompareModal
+   ========================================================================= */
+function CompareModal({ compareList, onClose, onRemove, onAddToCart }) {
+  return (
+    <div className="fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl max-w-4xl w-full p-6 relative space-y-6 max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center border-b border-stone-200 pb-3">
+          <h3 className="font-bold text-stone-900 text-lg flex items-center gap-2">
+            <Scale className="w-5 h-5 text-emerald-800" /> Product Comparison
+          </h3>
+          <button onClick={onClose}><X className="w-6 h-6 text-stone-400" /></button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
+          {compareList.map((product) => (
+            <div key={product.id} className="border border-stone-200 rounded-xl p-4 text-xs space-y-3 relative">
+              <button onClick={() => onRemove(product.id)} className="absolute top-2 right-2 text-stone-400 hover:text-red-600">
+                <X className="w-4 h-4" />
+              </button>
+              <img src={product.images[0]} alt={product.name} className="w-full h-32 object-cover rounded-lg" />
+              <h4 className="font-bold text-stone-900 line-clamp-2">{product.name}</h4>
+              <p className="font-extrabold text-emerald-800 text-sm">₹{product.price}</p>
+              <p className="text-stone-500"><strong>Materials:</strong> {product.materials.join(", ")}</p>
+              <p className="text-stone-500"><strong>Rating:</strong> {product.rating} ★</p>
+              <button onClick={() => onAddToCart(product, 1)} className="w-full bg-emerald-800 text-white font-bold py-2 rounded-lg">
+                Add to Cart
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================================
+   STREAMING_CHUNK:Supporting Pages - SustainabilityPage
+   ========================================================================= */
+function SustainabilityPage({ onShopClick }) {
+  return (
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
+      <div className="text-center space-y-4">
+        <span className="text-xs font-bold text-emerald-800 uppercase tracking-widest">Our Environmental Pledge</span>
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-stone-900">Radical Material Transparency</h1>
+        <p className="text-stone-600 text-sm max-w-2xl mx-auto leading-relaxed">
+          We believe true sustainability requires honesty. Every material used in EVERGREEN products is vetted for ethical sourcing, minimal water consumption, and natural end-of-life disposal.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-2xl border border-stone-200 space-y-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">1</div>
+          <h3 className="font-bold text-stone-900 text-base">Ethical Bamboo & Wood</h3>
+          <p className="text-xs text-stone-600 leading-relaxed">Organically grown without chemical pesticides or heavy irrigation. Harvested responsibly to allow continuous regrowth.</p>
+        </div>
+        <div className="bg-white p-6 rounded-2xl border border-stone-200 space-y-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">2</div>
+          <h3 className="font-bold text-stone-900 text-base">GOTS Organic Cotton</h3>
+          <p className="text-xs text-stone-600 leading-relaxed">Zero harmful synthetic fertilizers. Protects soil biodiversity and farming communities from toxic runoff.</p>
+        </div>
+        <div className="bg-white p-6 rounded-2xl border border-stone-200 space-y-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">3</div>
+          <h3 className="font-bold text-stone-900 text-base">Compostable & Upcycled</h3>
+          <p className="text-xs text-stone-600 leading-relaxed">Repurposed coconut husks and plant cellulose that return safely to earth without leaving microplastics behind.</p>
+        </div>
+      </div>
+
+      <div className="text-center">
+        <button onClick={onShopClick} className="bg-emerald-800 text-white font-bold px-8 py-3.5 rounded-xl shadow-md">
+          Explore Eco Products
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================================
+   STREAMING_CHUNK:Supporting Pages - AboutPage
+   ========================================================================= */
+function AboutPage({ onShopClick }) {
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-12 space-y-8">
+      <div className="text-center space-y-3">
+        <h1 className="text-3xl font-extrabold text-stone-900">About EVERGREEN</h1>
+        <p className="text-stone-600 text-sm max-w-xl mx-auto">
+          We are on a mission to make sustainable everyday choices simple, beautiful, and accessible to everyone.
+        </p>
+      </div>
+      <div className="bg-white p-8 rounded-2xl border border-stone-200 space-y-4 text-sm text-stone-700 leading-relaxed">
+        <p>
+          Founded on the principle that small habit shifts create massive global impact, EVERGREEN curates durable, non-toxic alternatives to everyday single-use plastic items.
+        </p>
+        <p>
+          From organic bamboo kitchen storage to solid zero-water shampoo bars, every item in our store is selected for its high quality, aesthetic beauty, and verified environmental credentials.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================================
+   STREAMING_CHUNK:Supporting Pages - FAQPage
+   ========================================================================= */
+function FAQPage() {
+  const [openIdx, setOpenIdx] = useState(0);
+
+  const faqs = [
+    { q: "Are all products completely plastic-free?", a: "Yes! All products are either 100% plastic-free or use minimal, food-grade safe components (like silicone seals) designed for long term reuse." },
+    { q: "How does free shipping work?", a: "We offer FREE carbon-neutral standard delivery across India on all orders above ₹999." },
+    { q: "What is your return policy?", a: "We offer a 30-day hassle-free return window for unused items in original eco packaging." },
+    { q: "How do I care for bamboo products?", a: "Handwash with mild soap and dry thoroughly in a ventilated area. Do not soak bamboo in standing water for prolonged periods." }
+  ];
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-12 space-y-6">
+      <h1 className="text-3xl font-extrabold text-stone-900 text-center">Frequently Asked Questions</h1>
+      <div className="space-y-3">
+        {faqs.map((faq, idx) => (
+          <div key={idx} className="bg-white rounded-xl border border-stone-200 overflow-hidden">
+            <button 
+              onClick={() => setOpenIdx(openIdx === idx ? null : idx)}
+              className="w-full text-left p-4 font-bold text-stone-900 text-sm flex justify-between items-center"
+            >
+              <span>{faq.q}</span>
+              <ChevronDown className={`w-4 h-4 transition-transform ${openIdx === idx ? "rotate-180 text-emerald-800" : ""}`} />
+            </button>
+            {openIdx === idx && (
+              <div className="px-4 pb-4 text-xs text-stone-600 border-t border-stone-100 pt-2 leading-relaxed">
+                {faq.a}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================================
+   STREAMING_CHUNK:Supporting Pages - ContactPage
+   ========================================================================= */
+function ContactPage({ showToast }) {
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-12 space-y-6">
+      <h1 className="text-3xl font-extrabold text-stone-900 text-center">Contact Customer Support</h1>
+      <form onSubmit={(e) => { e.preventDefault(); showToast("Message sent! We will respond within 24 hours."); e.target.reset(); }} className="bg-white p-6 rounded-2xl border border-stone-200 space-y-4">
+        <div>
+          <label className="text-xs font-semibold text-stone-700 block mb-1">Your Name</label>
+          <input type="text" required className="w-full bg-stone-50 border border-stone-300 rounded-lg p-2.5 text-xs" />
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-stone-700 block mb-1">Email Address</label>
+          <input type="email" required className="w-full bg-stone-50 border border-stone-300 rounded-lg p-2.5 text-xs" />
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-stone-700 block mb-1">Message</label>
+          <textarea required rows="4" className="w-full bg-stone-50 border border-stone-300 rounded-lg p-2.5 text-xs"></textarea>
+        </div>
+        <button type="submit" className="w-full bg-emerald-800 text-white font-bold py-3 rounded-xl text-xs">Send Message</button>
+      </form>
+    </div>
+  );
+}
+
+/* =========================================================================
+   STREAMING_CHUNK:Supporting Pages - WishlistPage
+   ========================================================================= */
+function WishlistPage({ wishlist, onSelectProduct, onAddToCart, onRemoveFromWishlist, onShopNow }) {
+  if (wishlist.length === 0) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-20 text-center space-y-6">
+        <Heart className="w-16 h-16 text-stone-300 mx-auto" />
+        <h2 className="text-2xl font-bold text-stone-900">Your Wishlist is Empty</h2>
+        <button onClick={onShopNow} className="bg-emerald-800 text-white font-bold py-3 px-6 rounded-xl">Discover Products</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+      <h1 className="text-3xl font-extrabold text-stone-900">My Wishlist ({wishlist.length})</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {wishlist.map(product => (
+          <ProductCard 
+            key={product.id} 
+            product={product} 
+            onSelect={onSelectProduct} 
+            onAddToCart={onAddToCart} 
+            onToggleWishlist={onRemoveFromWishlist} 
+            isWishlisted={true} 
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================================
+   STREAMING_CHUNK:Supporting Pages - PolicyPage
+   ========================================================================= */
+function PolicyPage() {
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-12 space-y-6 text-xs text-stone-700 leading-relaxed">
+      <h1 className="text-2xl font-extrabold text-stone-900">Store Policies</h1>
+      <section className="bg-white p-6 rounded-2xl border border-stone-200 space-y-2">
+        <h3 className="font-bold text-stone-900 text-sm">Shipping Policy</h3>
+        <p>Orders are dispatched within 24-48 business hours. Delivery typically takes 3-5 business days across major cities in India.</p>
+      </section>
+      <section className="bg-white p-6 rounded-2xl border border-stone-200 space-y-2">
+        <h3 className="font-bold text-stone-900 text-sm">30-Day Returns</h3>
+        <p>Items can be returned within 30 days of delivery provided they are unused and in original packaging.</p>
+      </section>
+    </div>
+  );
+}
